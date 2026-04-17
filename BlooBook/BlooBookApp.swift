@@ -25,7 +25,7 @@ struct BlooBookApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            CameraView()
         }
         .modelContainer(sharedModelContainer)
     }
