@@ -20,14 +20,20 @@ struct CollectionView: View {
                                 Text("All Stamps").font(.headline)
                                 Image(systemName: "chevron.right")
                             }
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                         }
                         ScrollView(.horizontal) {
                             HStack(spacing: 12) {
                                 ForEach(0..<10) { _ in
-                                    BookCard()
-                                        .frame(width: 140)
-                                        .scrollTargetLayout()
+                                    PhotoStamp(
+                                        photo: StampModel(
+                                            position: CGPoint(x: 200, y: 300),
+                                            source: .batur,
+                                            stamp: .stampVertical
+                                        )
+                                    )
+                                    .frame(width: 140)
+                                    .scrollTargetLayout()
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -48,7 +54,7 @@ struct CollectionView: View {
                                 Text("Traveling").font(.headline)
                                 Image(systemName: "chevron.right")
                             }
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                         }
                         ScrollView(.horizontal) {
                             HStack(spacing: 12) {
@@ -74,7 +80,7 @@ struct CollectionView: View {
                                 Text("Foods").font(.headline)
                                 Image(systemName: "chevron.right")
                             }
-                            .foregroundColor(.black)
+                            .foregroundColor(.primary)
                         }
                         ScrollView(.horizontal) {
                             HStack(spacing: 12) {
