@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ShowcaseView: View {
     var memories: [Memory] = []
+    @State private var selectedMemory: Memory?
+    @State private var showDetailPopup: Bool = false
     
     var body: some View {
         NavigationStack {
@@ -21,9 +23,23 @@ struct ShowcaseView: View {
                     
                     Text(memory.title).bold()
                 }
+                .onTapGesture {
+                    selectedMemory = memory
+                    
+                    showDetailPopup.toggle()
+                }
             }
         }
-        .navigationTitle(Text("Stamp"))
+        .navigationTitle("Stamp")
+        .sheet(isPresented: $showDetailPopup) {
+            if let selectedMemory {
+                DetailView(memory: selectedMemory)
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            } else {
+                Text("No memory selected")
+            }
+        }
     }
 }
 

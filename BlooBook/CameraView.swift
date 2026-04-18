@@ -149,81 +149,80 @@ struct CameraView: View {
             .onAppear {
                 camera.setup()
             }
-            .sheet(isPresented: $showSavePopup) {
-                VStack(spacing: 20) {
-                    Text("Save Memory")
-                        .font(.title2)
-                        .bold()
-                    
-                    if let image = currentImage {
-                        ZStack {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .scaleEffect(scale)
-                                .offset(offset)
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            offset = CGSize(
-                                                width: lastOffset.width + value.translation.width,
-                                                height: lastOffset.height + value.translation.height
-                                            )
-                                        }
-                                        .onEnded{ _ in lastOffset = offset }
-                                )
-                                .gesture(
-                                    MagnificationGesture()
-                                        .onChanged { value in
-                                            scale = lastScale * value
-                                        }
-                                        .onEnded { _ in lastScale = scale }
-                                )
-                        }
-                        .frame(width: 250, height: 250)
-                        .clipped()
-                        .mask {
-                            Image(stamps[selectedFrameIndex])
-                                .resizable()
-                                .scaledToFit()
-                                .scaleEffect(0.55)
-                        }
+        }
+        .sheet(isPresented: $showSavePopup) {
+            VStack(spacing: 20) {
+                Text("Save Memory")
+                    .font(.title2)
+                    .bold()
+                
+                if let image = currentImage {
+                    ZStack {
+                        Image(uiImage: image)
+                            .resizable()
+                            .scaledToFill()
+                            .scaleEffect(scale)
+                            .offset(offset)
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        offset = CGSize(
+                                            width: lastOffset.width + value.translation.width,
+                                            height: lastOffset.height + value.translation.height
+                                        )
+                                    }
+                                    .onEnded{ _ in lastOffset = offset }
+                            )
+                            .gesture(
+                                MagnificationGesture()
+                                    .onChanged { value in
+                                        scale = lastScale * value
+                                    }
+                                    .onEnded { _ in lastScale = scale }
+                            )
                     }
-                    
-                    TextField("Title", text: $titleText)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    TextField("Note", text: $noteText)
-                        .textFieldStyle(.roundedBorder)
-                    
-                    Button("Save") {
-                        if let image = currentImage {
-                            if let mask = UIImage(named: stamps[selectedFrameIndex]) {
-                                let final = renderFinalImage(
-                                    photo: image,
-                                    maskImage: mask,
-                                    scale: scale,
-                                    offset: offset,
-                                    canvasSize: CGSize(width: 500, height: 500)
-                                )
-                                savedImage = final
-                                let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
-                                
-                                 memories.append(memory)
-                            }
-                        }
-
-                        showSavePopup = false
-                    }
-                    
-                    Button("Cancel") {
-                        showSavePopup = false
+                    .frame(width: 250, height: 250)
+                    .clipped()
+                    .mask {
+                        Image(stamps[selectedFrameIndex])
+                            .resizable()
+                            .scaledToFit()
+                            .scaleEffect(0.55)
                     }
                 }
-                .padding()
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                
+                TextField("Title", text: $titleText)
+                    .textFieldStyle(.roundedBorder)
+                
+                TextField("Note", text: $noteText)
+                    .textFieldStyle(.roundedBorder)
+                
+                Button("Save") {
+                    if let image = currentImage {
+                        if let mask = UIImage(named: stamps[selectedFrameIndex]) {
+                            let final = renderFinalImage(
+                                photo: image,
+                                maskImage: mask,
+                                scale: scale,
+                                offset: offset,
+                                canvasSize: CGSize(width: 500, height: 500)
+                            )
+                            savedImage = final
+                            let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
+                            
+                             memories.append(memory)
+                        }
+                    }
+
+                    showSavePopup = false
+                }
+                
+                Button("Cancel") {
+                    showSavePopup = false
+                }
             }
+            .padding()
+            .presentationDragIndicator(.visible)
         }
     }
     
