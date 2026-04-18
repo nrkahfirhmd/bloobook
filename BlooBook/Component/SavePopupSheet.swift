@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SavePopupView: View {
+struct SavePopupSheet: View {
     var currentImage: UIImage?
     @State private var titleText = ""
     @State private var noteText = ""
@@ -37,5 +37,5 @@ struct SavePopupView: View {
 }
 
 #Preview {
-    SavePopupView()
+    SavePopupSheet()
 }

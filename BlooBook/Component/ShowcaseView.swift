@@ -33,7 +33,7 @@ struct ShowcaseView: View {
         .navigationTitle("Stamp")
         .sheet(isPresented: $showDetailPopup) {
             if let selectedMemory {
-                DetailView(memory: selectedMemory)
+                DetailSheet(memory: selectedMemory)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             } else {

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DetailView: View {
+struct DetailSheet: View {
     var memory = Memory(
         image: UIImage(named: "temp")!,
         title: "Da Vinci",
@@ -58,5 +58,5 @@ struct DetailView: View {
 }
 
 #Preview {
-    DetailView()
+    DetailSheet()
 }
