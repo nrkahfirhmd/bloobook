@@ -38,12 +38,6 @@ struct DetailSheet: View {
                 .resizable()
                 .scaledToFit()
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .scaleEffect(2)
-                .mask {
-                    Image("stamp_2")
-                        .resizable()
-                        .scaledToFit()
-                }
             
             Text(memory.note)
                 .italic()

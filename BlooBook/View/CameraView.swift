@@ -137,6 +137,8 @@ struct CameraView: View {
                                    let image = UIImage(data: data) {
                                     await MainActor.run {
                                         currentImage = image
+                                        
+                                        showSavePopup = true
                                     }
                                 }
                             }
@@ -151,165 +153,14 @@ struct CameraView: View {
             }
         }
         .sheet(isPresented: $showSavePopup) {
-            VStack(spacing: 20) {
-                Text("Save Memory")
-                    .font(.title2)
-                    .bold()
-                
-                if let image = currentImage {
-                    ZStack {
-                        Image(uiImage: image)
-                            .resizable()
-                            .scaledToFill()
-                            .scaleEffect(scale)
-                            .offset(offset)
-                            .gesture(
-                                DragGesture()
-                                    .onChanged { value in
-                                        offset = CGSize(
-                                            width: lastOffset.width + value.translation.width,
-                                            height: lastOffset.height + value.translation.height
-                                        )
-                                    }
-                                    .onEnded{ _ in lastOffset = offset }
-                            )
-                            .gesture(
-                                MagnificationGesture()
-                                    .onChanged { value in
-                                        scale = lastScale * value
-                                    }
-                                    .onEnded { _ in lastScale = scale }
-                            )
-                    }
-                    .frame(width: 250, height: 250)
-                    .clipped()
-                    .mask {
-                        Image(stamps[selectedFrameIndex])
-                            .resizable()
-                            .scaledToFit()
-                            .scaleEffect(0.55)
-                    }
-                }
-                
-                TextField("Title", text: $titleText)
-                    .textFieldStyle(.roundedBorder)
-                
-                TextField("Note", text: $noteText)
-                    .textFieldStyle(.roundedBorder)
-                
-                Button("Save") {
-                    if let image = currentImage {
-                        if let mask = UIImage(named: stamps[selectedFrameIndex]) {
-                            let final = renderFinalImage(
-                                photo: image,
-                                maskImage: mask,
-                                scale: scale,
-                                offset: offset,
-                                canvasSize: CGSize(width: 500, height: 500)
-                            )
-                            savedImage = final
-                            let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
-                            
-                             memories.append(memory)
-                        }
-                    }
-
-                    showSavePopup = false
-                }
-                
-                Button("Cancel") {
-                    showSavePopup = false
-                }
+            if let currentImage = currentImage {
+                SavePopupSheet(
+                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], memories: $memories, showSavePopup: $showSavePopup
+                )
+                .padding()
+                .presentationDragIndicator(.visible)
             }
-            .padding()
-            .presentationDragIndicator(.visible)
         }
-    }
-    
-    func renderFinalImage(
-        photo: UIImage,
-        maskImage: UIImage,
-        scale: CGFloat,
-        offset: CGSize,
-        canvasSize: CGSize
-    ) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: canvasSize)
-        
-        var maskRect: CGRect = .zero
-        
-        let image = renderer.image { context in
-            let cg = context.cgContext
-                    
-            let maskAspect = maskImage.size.width / maskImage.size.height
-            let canvasAspect = canvasSize.width / canvasSize.height
-            
-            var maskWidth: CGFloat
-            var maskHeight: CGFloat
-            
-            if maskAspect > canvasAspect {
-                maskWidth = canvasSize.width
-                maskHeight = canvasSize.width / maskAspect
-            } else {
-                maskHeight = canvasSize.height
-                maskWidth = canvasSize.height * maskAspect
-            }
-            
-            let scaleEffect: CGFloat = 0.55
-            maskWidth *= scaleEffect
-            maskHeight *= scaleEffect
-            
-            let maskOrigin = CGPoint(
-                x: (canvasSize.width - maskWidth) / 2,
-                y: (canvasSize.height - maskHeight) / 2
-            )
-            
-            maskRect = CGRect(origin: maskOrigin, size: CGSize(width: maskWidth, height: maskHeight))
-            
-            if let maskCG = maskImage.cgImage {
-                cg.saveGState()
-                cg.clip(to: maskRect, mask: maskCG)
-            }
-            
-            cg.translateBy(
-                x: canvasSize.width / 2 + offset.width,
-                y: canvasSize.height / 2 + offset.height
-            )
-            
-            cg.scaleBy(x: scale, y: scale)
-            
-            let aspectWidth = canvasSize.width / photo.size.width
-            let aspectHeight = canvasSize.height / photo.size.height
-            let fillScale = max(aspectWidth, aspectHeight)
-            
-            let drawWidth = photo.size.width * fillScale
-            let drawHeight = photo.size.height * fillScale
-            
-            let drawRect = CGRect(
-                x: -drawWidth / 2,
-                y: -drawHeight / 2,
-                width: drawWidth,
-                height: drawHeight
-            )
-            
-            photo.draw(in: drawRect)
-            
-            cg.restoreGState()
-        }
-        
-        let scaleFactor = image.scale
-        
-        let scaledRect = CGRect(
-            x: maskRect.origin.x * scaleFactor,
-            y: maskRect.origin.y * scaleFactor,
-            width: maskRect.size.width * scaleFactor,
-            height: maskRect.size.height * scaleFactor
-        )
-        
-        guard let cgImage = image.cgImage?.cropping(to: scaledRect) else {
-            return image
-        }
-        
-        return UIImage(cgImage: cgImage, scale: scaleFactor, orientation: image.imageOrientation)
     }
 }
 

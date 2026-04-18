@@ -12,8 +12,13 @@ struct ShowcaseView: View {
     @State private var selectedMemory: Memory?
     @State private var showDetailPopup: Bool = false
     
+    let columns = [
+        GridItem(.flexible(), spacing: 16),
+        GridItem(.flexible(), spacing: 16)
+    ]
+    
     var body: some View {
-        NavigationStack {
+        LazyVGrid(columns: columns, spacing: 16) {
             ForEach(memories) { memory in
                 VStack {
                     Image(uiImage: memory.image)
@@ -22,6 +27,10 @@ struct ShowcaseView: View {
                         .frame(height: 150)
                     
                     Text(memory.title).bold()
+                    
+                    Text(memory.date, style: .date)
+                        .font(Font.caption)
+                        .foregroundColor(.secondary)
                 }
                 .onTapGesture {
                     selectedMemory = memory
@@ -30,6 +39,7 @@ struct ShowcaseView: View {
                 }
             }
         }
+        .padding()
         .navigationTitle("Stamp")
         .sheet(isPresented: $showDetailPopup) {
             if let selectedMemory {
