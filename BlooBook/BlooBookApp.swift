@@ -12,7 +12,6 @@ import SwiftData
 struct BlooBookApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,7 +24,7 @@ struct BlooBookApp: App {
 
     var body: some Scene {
         WindowGroup {
-            CameraView()
+            ContentView()
         }
         .modelContainer(sharedModelContainer)
     }
