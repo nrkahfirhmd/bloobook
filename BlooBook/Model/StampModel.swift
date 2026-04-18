@@ -15,6 +15,7 @@ struct StampModel: Identifiable {
     var scale: CGFloat = 1.0
     var rotation: Angle = .zero
     
-    var source: ImageResource
+    var image: UIImage?         
+    var source: ImageResource?
     var stamp: ImageResource
 }

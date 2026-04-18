@@ -20,42 +20,60 @@ struct DraggableStamp: View {
             .position(stamp.position)
             .scaleEffect(stamp.scale)
             .rotationEffect(stamp.rotation)
-        
+            
             .onAppear {
                 lastPosition = stamp.position
                 lastScale = stamp.scale
                 lastRotation = stamp.rotation
             }
+            
+            .gesture(combinedGesture)
+    }
+    
+    var combinedGesture: some Gesture {
         
-            .gesture(
-                DragGesture()
-                    .onChanged { value in
-                        stamp.position = CGPoint(
-                            x: lastPosition.x + value.translation.width,
-                            y: lastPosition.y + value.translation.height
-                        )
-                    }
-                    .onEnded { _ in
-                        lastPosition = stamp.position
-                    }
-            )
-            .simultaneousGesture(
-                MagnificationGesture()
-                    .onChanged { value in
-                        stamp.scale = lastScale * value
-                    }
-                    .onEnded { _ in
-                        lastScale = stamp.scale
-                    }
-            )
-            .simultaneousGesture(
-                RotationGesture()
-                    .onChanged { value in
-                        stamp.rotation = lastRotation + value
-                    }
-                    .onEnded { _ in
-                        lastRotation = stamp.rotation
-                    }
-            )
+        let drag = DragGesture()
+        let scale = MagnificationGesture()
+        let rotate = RotationGesture()
+        
+        return drag
+            .simultaneously(with: scale)
+            .simultaneously(with: rotate)
+            .onChanged { value in
+                
+                let dragValue = value.first?.first
+                let scaleValue = value.first?.second
+                let rotationValue = value.second
+                
+                if let dragValue {
+                    let t = dragValue.translation
+                    let angle = stamp.rotation.radians
+
+                    let adjustedX = t.width * cos(angle) + t.height * sin(angle)
+                    let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
+                    let damping = 1 / sqrt(stamp.scale)
+
+                    stamp.position = CGPoint(
+                        x: lastPosition.x + adjustedX * damping,
+                        y: lastPosition.y + adjustedY * damping
+                    )
+                    
+                }
+                
+                if let scaleValue {
+                    let newScale = lastScale * scaleValue
+
+                    stamp.scale = min(max(newScale, 0.5), 3.0)
+                }
+                
+                if let rotationValue {
+                    stamp.rotation = lastRotation + rotationValue
+                }
+            }
+            .onEnded { _ in
+                lastPosition = stamp.position
+                lastScale = stamp.scale
+                lastRotation = stamp.rotation
+            }
     }
 }

@@ -6,13 +6,18 @@
 //
 
 import SwiftUI
+import PhotosUI
 
 struct BookDetailView: View {
     @Environment(\.dismiss) var dismiss
+    @State private var showBackgroundPicker = false
+    @State private var background: ImageResource = .paper1
+    @State private var selectedItem: PhotosPickerItem?
     @State private var stamps: [StampModel] = []
+    var album: AlbumModel
     var body: some View {
         ZStack {
-            Image(.paper1)
+            Image(background)
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
@@ -26,6 +31,17 @@ struct BookDetailView: View {
                 DraggableStamp(stamp: $stamp)
             }
         }
+        .onChange(of: selectedItem) {
+            
+            Task {
+                if let data = try? await selectedItem?.loadTransferable(type: Data.self),
+                   let uiImage = UIImage(data: data) {
+                    
+                    addStamp(image: uiImage)
+                    selectedItem = nil
+                }
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button {
@@ -34,23 +50,47 @@ struct BookDetailView: View {
                     Image(systemName: "chevron.left")
                 }
             }
+            
+            ToolbarItem(placement: .bottomBar){
+                
+            }
             ToolbarItemGroup(placement: .bottomBar) {
-                Button {
-                    
-                } label: {
+                PhotosPicker(selection: $selectedItem, matching: .images) {
                     Image(systemName: "photo")
                 }
                 
-                Button {
-                    
+                Menu {
+                    Button {
+                            background = .paper1
+                        } label: {
+                            HStack {
+                                Image(.paper1)
+                                    .resizable()
+                                    .frame(width: 30, height: 40)
+                                Text("White")
+                            }
+                        }
+                    Button {
+                            background = .paper2
+                        } label: {
+                            HStack {
+                                Image(.paper2)
+                                    .resizable()
+                                    .frame(width: 30, height: 40)
+                                Text("Vintage")
+                            }
+                        }
+
                 } label: {
                     Image(systemName: "paintpalette.fill")
                 }
                 
                 Spacer()
                 
+               
+                
                 Button {
-                    addStamp()
+                    
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -67,24 +107,26 @@ struct BookDetailView: View {
                 }
             }
         }
+        
+        
         .toolbar(.hidden, for: .tabBar)
-        .navigationTitle("Book")
+        .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
     }
     
-    func addStamp() {
+    func addStamp(image: UIImage) {
         let newStamp = StampModel(
-            position: CGPoint(x: 200, y: 300),
-            source: .batur,
+            position: CGPoint(x: 200, y: 350),
+            image: image,
+            source: nil,
             stamp: .stampVertical
         )
         
-        stamps.append(newStamp)
+        withAnimation(.spring()) {
+            stamps.append(newStamp)
+        }
     }
     
 }
 
-#Preview {
-    BookDetailView()
-}
