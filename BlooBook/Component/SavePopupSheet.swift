@@ -21,6 +21,12 @@ struct SavePopupSheet: View {
     @State private var noteText = ""
     @State private var savedImage: UIImage?
     @State private var selectedFrameIndex: Int = 0
+    @State private var maskBounds: CGRect = .zero
+    
+    private let canvasSize = CGSize(width: 500, height: 500)
+    private let maskScaleFactor: CGFloat = 0.55
+    private let minScale: CGFloat = 0.5
+    private let maxScale: CGFloat = 3
     
     var body: some View {
         VStack(spacing: 20) {
@@ -35,34 +41,47 @@ struct SavePopupSheet: View {
                         .scaledToFill()
                         .scaleEffect(scale)
                         .offset(offset)
-                        .gesture(
+                        .simultaneousGesture(
                             DragGesture()
                                 .onChanged { value in
-                                    offset = CGSize(
+                                    let newOffset = CGSize(
                                         width: lastOffset.width + value.translation.width,
                                         height: lastOffset.height + value.translation.height
                                     )
+                                    offset = clampOffset(newOffset, scale: scale)
                                 }
                                 .onEnded{ _ in lastOffset = offset }
                         )
-                        .gesture(
+                        .simultaneousGesture(
                             MagnificationGesture()
                                 .onChanged { value in
-                                    scale = lastScale * value
+                                    let newScale = lastScale * value
+                                    scale = clampScale(newScale)
+                                    
+                                    offset = clampOffset(offset, scale: scale)
                                 }
-                                .onEnded { _ in lastScale = scale }
+                                .onEnded { _ in
+                                    lastScale = scale
+                                    lastOffset = offset
+                                }
                         )
                 }
-                .frame(width: 250, height: 250)
+                .frame(width: 500, height: 500)
                 .clipped()
                 .mask {
-                    if let stamp {
-                        Image(stamp)
-                            .resizable()
-                            .scaledToFit()
-                            .scaleEffect(0.55)
-                    }
+                    Image(stamp!)
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(0.55)
                 }
+                .onAppear {
+                    maskBounds = calculateMaskBounds()
+                }
+                .frame(
+                    width: maskBounds.width,
+                    height: maskBounds.height
+                )
+                .clipped()
             }
             
             VStack(alignment: .leading) {
@@ -87,21 +106,22 @@ struct SavePopupSheet: View {
                 ZStack(alignment: .topLeading) {
                     if noteText.isEmpty {
                         Text("Write your note...")
-                            .foregroundColor(.gray)
+                            .foregroundColor(.gray.opacity(0.5))
                             .padding(.horizontal, 10)
-                            .padding(.vertical, 5)
+                            .padding(.vertical, 10)
                     }
                     
                     TextEditor(text: $noteText)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 5)
+                        .scrollContentBackground(.hidden)
                         .background(Color.clear)
                 }
                 .background() {
                     RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.blue.opacity(0.5))
+                        .stroke(Color.gray.opacity(0.5))
                 }
-                .frame(height: 150)
+                .frame(height: 100)
             }
             
             Button(action: {
@@ -142,6 +162,70 @@ struct SavePopupSheet: View {
             .padding(.vertical)
         }
         .padding()
+    }
+    
+    func clampScale(_ newScale: CGFloat) -> CGFloat {
+        return min(maxScale, max(minScale, newScale))
+    }
+    
+    func clampOffset(_ proposedOffset: CGSize, scale: CGFloat) -> CGSize {
+        let maskBounds = calculateMaskBounds()
+        
+        let maskCenterX = maskBounds.midX
+        let maskCenterY = maskBounds.midY
+        
+        let canvasCenterX = canvasSize.width / 2
+        let canvasCenterY = canvasSize.height / 2
+        
+        let deltaX = maskCenterX - canvasCenterX
+        let deltaY = maskCenterY - canvasCenterY
+        
+        let adjustedOffset = CGSize(
+            width: proposedOffset.width + deltaX,
+            height: proposedOffset.height + deltaY
+        )
+        
+        let scaledImageWidth = canvasSize.width * scale
+        let scaledImageHeight = canvasSize.height * scale
+        
+        let horizontalLimit = max(0, (scaledImageWidth - maskBounds.width) / 2)
+        let verticalLimit = max(0, (scaledImageHeight - maskBounds.height) / 2)
+        
+        let clampedX = min(max(adjustedOffset.width, -horizontalLimit), horizontalLimit)
+        let clampedY = min(max(adjustedOffset.height, -verticalLimit), verticalLimit)
+        
+        return CGSize(width: clampedX - deltaX, height: clampedY - deltaY)
+    }
+    
+    func calculateMaskBounds() -> CGRect {
+        guard let stamp = stamp,
+              let maskImage = UIImage(named: stamp) else {
+            return .zero
+        }
+        
+        let maskAspect = maskImage.size.width / maskImage.size.height
+        let canvasAspect = canvasSize.width / canvasSize.height
+        
+        var maskWidth: CGFloat
+        var maskHeight: CGFloat
+        
+        if maskAspect > canvasAspect {
+            maskWidth = canvasSize.width
+            maskHeight = canvasSize.width / maskAspect
+        } else {
+            maskHeight = canvasSize.height
+            maskWidth = canvasSize.height * maskAspect
+        }
+        
+        maskWidth *= maskScaleFactor
+        maskHeight *= maskScaleFactor
+        
+        return CGRect(
+            x: (canvasSize.width - maskWidth) / 2,
+            y: (canvasSize.height - maskHeight) / 2,
+            width: maskWidth,
+            height: maskHeight
+        )
     }
     
     func renderFinalImage(
@@ -188,12 +272,12 @@ struct SavePopupSheet: View {
                 cg.clip(to: maskRect, mask: maskCG)
             }
             
-            cg.translateBy(
-                x: canvasSize.width / 2 + offset.width,
-                y: canvasSize.height / 2 + offset.height
-            )
-            
             cg.scaleBy(x: scale, y: scale)
+            
+            cg.translateBy(
+                x: (canvasSize.width / 2 + offset.width) / scale,
+                y: (canvasSize.height / 2 + offset.height) / scale
+            )
             
             let aspectWidth = canvasSize.width / photo.size.width
             let aspectHeight = canvasSize.height / photo.size.height
@@ -246,3 +330,4 @@ struct SavePopupSheet: View {
            showSavePopup: .constant(true)
        )
 }
+
