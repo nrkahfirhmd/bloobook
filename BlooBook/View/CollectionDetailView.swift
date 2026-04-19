@@ -8,7 +8,33 @@
 import SwiftUI
 
 struct CollectionDetailView: View {
+    var collection: String
+    var albums: [AlbumModel]
+    @State private var columns = [
+        GridItem(.flexible(), spacing: 2),
+        GridItem(.flexible(), spacing: 2)
+    ]
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        NavigationStack {
+            ScrollView {
+                LazyVGrid(columns: columns, spacing: 24){
+                    ForEach(albums) { album in
+                        BookCard(
+                            album: album
+                        )
+                        .frame(width: 140)
+                        .scrollTargetLayout()
+                    }
+                }
+                .padding()
+                .navigationTitle(collection)
+                .navigationBarTitleDisplayMode(.inline)
+            }
+            .scrollIndicators(.hidden)
+        }
     }
+}
+
+#Preview {
+    CollectionDetailView(collection: "Book", albums: AlbumModel.sampleData)
 }
