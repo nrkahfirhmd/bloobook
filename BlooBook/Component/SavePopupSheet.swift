@@ -9,33 +9,325 @@ import SwiftUI
 
 struct SavePopupSheet: View {
     var currentImage: UIImage?
+    var stamp: String?
+    @Binding var memories: [Memory]
+    @Binding var showSavePopup: Bool
+    
+    @State private var scale: CGFloat = 1
+    @State private var offset: CGSize = .init(width: 0, height: 0)
+    @State private var lastOffset: CGSize = .init(width: 0, height: 0)
+    @State private var lastScale: CGFloat = 1
     @State private var titleText = ""
     @State private var noteText = ""
     @State private var savedImage: UIImage?
+    @State private var selectedFrameIndex: Int = 0
+    @State private var maskBounds: CGRect = .zero
+    
+    private let canvasSize = CGSize(width: 500, height: 500)
+    private let maskScaleFactor: CGFloat = 0.55
+    private let minScale: CGFloat = 0.5
+    private let maxScale: CGFloat = 3
     
     var body: some View {
         VStack(spacing: 20) {
             Text("Save Memory")
-                .font(.title2)
+                .font(.title)
                 .bold()
             
-            TextField("Title", text: $titleText)
-                .textFieldStyle(.roundedBorder)
+            if let image = currentImage {
+                ZStack {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .scaleEffect(scale)
+                        .offset(offset)
+                        .simultaneousGesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    let newOffset = CGSize(
+                                        width: lastOffset.width + value.translation.width,
+                                        height: lastOffset.height + value.translation.height
+                                    )
+                                    offset = clampOffset(newOffset, scale: scale)
+                                }
+                                .onEnded{ _ in lastOffset = offset }
+                        )
+                        .simultaneousGesture(
+                            MagnificationGesture()
+                                .onChanged { value in
+                                    let newScale = lastScale * value
+                                    scale = clampScale(newScale)
+                                    
+                                    offset = clampOffset(offset, scale: scale)
+                                }
+                                .onEnded { _ in
+                                    lastScale = scale
+                                    lastOffset = offset
+                                }
+                        )
+                }
+                .frame(width: 500, height: 500)
+                .clipped()
+                .mask {
+                    Image(stamp!)
+                        .resizable()
+                        .scaledToFit()
+                        .scaleEffect(0.55)
+                }
+                .onAppear {
+                    maskBounds = calculateMaskBounds()
+                }
+                .frame(
+                    width: maskBounds.width,
+                    height: maskBounds.height
+                )
+                .clipped()
+            }
             
-            TextField("Note", text: $noteText)
-                .textFieldStyle(.roundedBorder)
-            
-            Button("Save") {
-                if let image = currentImage {
-                    savedImage = image
-                    
-                    print("Saved", titleText, noteText)
+            VStack(alignment: .leading) {
+                Text("Title")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                
+                VStack(spacing: 0) {
+                    TextField("Meow", text: $titleText)
+                        .padding(.bottom, 5)
+                        .padding(.horizontal, 5)
+                    Divider()
+                            .background(Color.gray)
                 }
             }
+            
+            VStack(alignment: .leading) {
+                Text("Note (max. 100 words)")
+                    .font(.title3)
+                    .fontWeight(.medium)
+                
+                ZStack(alignment: .topLeading) {
+                    if noteText.isEmpty {
+                        Text("Write your note...")
+                            .foregroundColor(.gray.opacity(0.5))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 10)
+                    }
+                    
+                    TextEditor(text: $noteText)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .scrollContentBackground(.hidden)
+                        .background(Color.clear)
+                }
+                .background() {
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.gray.opacity(0.5))
+                }
+                .frame(height: 100)
+            }
+            
+            Button(action: {
+                if let image = currentImage {
+                    if let stamp = stamp,
+                       let mask = UIImage(named: stamp) {
+                        let final = renderFinalImage(
+                            photo: image,
+                            maskImage: mask,
+                            scale: scale,
+                            offset: offset,
+                            canvasSize: CGSize(width: 500, height: 500)
+                        )
+                        savedImage = final
+                        
+                        let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
+
+                        memories.append(memory)
+                    }
+                }
+                showSavePopup = false
+            }) {
+                HStack {
+                    Image(systemName: "photo.artframe")
+
+                    Text("Save")
+                }
+                .font(.headline)
+                .foregroundColor(.white)
+                .padding()
+                .background(Color.blue)
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+            }
+            
+            Button("Cancel") {
+                showSavePopup = false
+            }
+            .padding(.vertical)
         }
+        .padding()
+    }
+    
+    func clampScale(_ newScale: CGFloat) -> CGFloat {
+        return min(maxScale, max(minScale, newScale))
+    }
+    
+    func clampOffset(_ proposedOffset: CGSize, scale: CGFloat) -> CGSize {
+        let maskBounds = calculateMaskBounds()
+        
+        let maskCenterX = maskBounds.midX
+        let maskCenterY = maskBounds.midY
+        
+        let canvasCenterX = canvasSize.width / 2
+        let canvasCenterY = canvasSize.height / 2
+        
+        let deltaX = maskCenterX - canvasCenterX
+        let deltaY = maskCenterY - canvasCenterY
+        
+        let adjustedOffset = CGSize(
+            width: proposedOffset.width + deltaX,
+            height: proposedOffset.height + deltaY
+        )
+        
+        let scaledImageWidth = canvasSize.width * scale
+        let scaledImageHeight = canvasSize.height * scale
+        
+        let horizontalLimit = max(0, (scaledImageWidth - maskBounds.width) / 2)
+        let verticalLimit = max(0, (scaledImageHeight - maskBounds.height) / 2)
+        
+        let clampedX = min(max(adjustedOffset.width, -horizontalLimit), horizontalLimit)
+        let clampedY = min(max(adjustedOffset.height, -verticalLimit), verticalLimit)
+        
+        return CGSize(width: clampedX - deltaX, height: clampedY - deltaY)
+    }
+    
+    func calculateMaskBounds() -> CGRect {
+        guard let stamp = stamp,
+              let maskImage = UIImage(named: stamp) else {
+            return .zero
+        }
+        
+        let maskAspect = maskImage.size.width / maskImage.size.height
+        let canvasAspect = canvasSize.width / canvasSize.height
+        
+        var maskWidth: CGFloat
+        var maskHeight: CGFloat
+        
+        if maskAspect > canvasAspect {
+            maskWidth = canvasSize.width
+            maskHeight = canvasSize.width / maskAspect
+        } else {
+            maskHeight = canvasSize.height
+            maskWidth = canvasSize.height * maskAspect
+        }
+        
+        maskWidth *= maskScaleFactor
+        maskHeight *= maskScaleFactor
+        
+        return CGRect(
+            x: (canvasSize.width - maskWidth) / 2,
+            y: (canvasSize.height - maskHeight) / 2,
+            width: maskWidth,
+            height: maskHeight
+        )
+    }
+    
+    func renderFinalImage(
+        photo: UIImage,
+        maskImage: UIImage,
+        scale: CGFloat,
+        offset: CGSize,
+        canvasSize: CGSize
+    ) -> UIImage {
+        let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        
+        var maskRect: CGRect = .zero
+        
+        let image = renderer.image { context in
+            let cg = context.cgContext
+                    
+            let maskAspect = maskImage.size.width / maskImage.size.height
+            let canvasAspect = canvasSize.width / canvasSize.height
+            
+            var maskWidth: CGFloat
+            var maskHeight: CGFloat
+            
+            if maskAspect > canvasAspect {
+                maskWidth = canvasSize.width
+                maskHeight = canvasSize.width / maskAspect
+            } else {
+                maskHeight = canvasSize.height
+                maskWidth = canvasSize.height * maskAspect
+            }
+            
+            let scaleEffect: CGFloat = 0.55
+            maskWidth *= scaleEffect
+            maskHeight *= scaleEffect
+            
+            let maskOrigin = CGPoint(
+                x: (canvasSize.width - maskWidth) / 2,
+                y: (canvasSize.height - maskHeight) / 2
+            )
+            
+            maskRect = CGRect(origin: maskOrigin, size: CGSize(width: maskWidth, height: maskHeight))
+            
+            if let maskCG = maskImage.cgImage {
+                cg.saveGState()
+                cg.clip(to: maskRect, mask: maskCG)
+            }
+            
+            cg.scaleBy(x: scale, y: scale)
+            
+            cg.translateBy(
+                x: (canvasSize.width / 2 + offset.width) / scale,
+                y: (canvasSize.height / 2 + offset.height) / scale
+            )
+            
+            let aspectWidth = canvasSize.width / photo.size.width
+            let aspectHeight = canvasSize.height / photo.size.height
+            let fillScale = max(aspectWidth, aspectHeight)
+            
+            let drawWidth = photo.size.width * fillScale
+            let drawHeight = photo.size.height * fillScale
+            
+            let drawRect = CGRect(
+                x: -drawWidth / 2,
+                y: -drawHeight / 2,
+                width: drawWidth,
+                height: drawHeight
+            )
+            
+            photo.draw(in: drawRect)
+            
+            cg.restoreGState()
+        }
+        
+        let scaleFactor = image.scale
+        
+        let scaledRect = CGRect(
+            x: maskRect.origin.x * scaleFactor,
+            y: maskRect.origin.y * scaleFactor,
+            width: maskRect.size.width * scaleFactor,
+            height: maskRect.size.height * scaleFactor
+        )
+        
+        guard let cgImage = image.cgImage?.cropping(to: scaledRect) else {
+            return image
+        }
+        
+        return UIImage(cgImage: cgImage, scale: scaleFactor, orientation: image.imageOrientation)
     }
 }
 
 #Preview {
-    SavePopupSheet()
+    SavePopupSheet(
+           currentImage: UIImage(named: "temp"),
+           stamp: "stamp_1",
+           memories: .constant([
+               Memory(
+                   image: UIImage(named: "temp")!,
+                   title: "Dynamic Duo",
+                   note: "Handsome Duo",
+                   date: Date()
+               )
+           ]),
+           showSavePopup: .constant(true)
+       )
 }
+
