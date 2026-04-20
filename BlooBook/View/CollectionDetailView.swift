@@ -9,11 +9,13 @@ import SwiftUI
 
 struct CollectionDetailView: View {
     var collection: String
-    var albums: [AlbumModel]
+    var albums: [Album]
+    
     @State private var columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
     ]
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -36,5 +38,5 @@ struct CollectionDetailView: View {
 }
 
 #Preview {
-    CollectionDetailView(collection: "Book", albums: AlbumModel.sampleData)
+//    CollectionDetailView(collection: "Book", albums: AlbumModel.sampleData)
 }

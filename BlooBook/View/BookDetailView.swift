@@ -7,14 +7,18 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct BookDetailView: View {
     @Environment(\.dismiss) var dismiss
     @State private var showBackgroundPicker = false
     @State private var background: ImageResource = .paper1
     @State private var selectedItem: PhotosPickerItem?
-    @State private var stamps: [StampModel] = []
-    var album: AlbumModel
+    
+    @Query var photos: [Photo]
+    
+    var album: Album
+    
     var body: some View {
         ZStack {
             Image(background)
@@ -22,22 +26,21 @@ struct BookDetailView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            if stamps.isEmpty {
+            if photos.isEmpty {
                 Text("Tap + to add stamp")
                     .foregroundStyle(.gray)
             }
             
-            ForEach($stamps) { $stamp in
-                DraggableStamp(stamp: $stamp)
+            ForEach(photos) { photo in
+                DraggableStamp(photo: photo)
             }
         }
         .onChange(of: selectedItem) {
-            
             Task {
                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
                     
-                    addStamp(image: uiImage)
+//                    addStamp(image: uiImage)
                     selectedItem = nil
                 }
             }
@@ -112,18 +115,22 @@ struct BookDetailView: View {
         .navigationBarBackButtonHidden(true)
     }
     
-    func addStamp(image: UIImage) {
-        let newStamp = StampModel(
-            position: CGPoint(x: 200, y: 350),
-            image: image,
-            source: nil,
-            stamp: .stampVertical
-        )
-        
-        withAnimation(.spring()) {
-            stamps.append(newStamp)
-        }
-    }
+//    func addPhoto(image: UIImage) {
+//        let newMemory = Memory(image: UIImage, title: String, note: <#T##String#>, date: <#T##Date#>)
+//        
+//        let newPhoto = Photo(position: CGPoint(x: 200, y: 350), memory: <#T##Memory#>, album: <#T##[Album]#>)
+//        
+//        let newStamp = StampModel(
+//            position: CGPoint(x: 200, y: 350),
+//            image: image,
+//            source: nil,
+//            stamp: .stampVertical
+//        )
+//        
+//        withAnimation(.spring()) {
+//            stamps.append(newStamp)
+//        }
+//    }
     
 }
 

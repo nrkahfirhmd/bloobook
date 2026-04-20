@@ -8,16 +8,42 @@
 import SwiftUI
 import SwiftData
 
+enum Tab {
+    case camera
+    case collection
+}
+
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     
+    @State private var selectedTab: Tab = .camera
+    @StateObject private var camera = CameraManager()
+    
     var body: some View {
-        TabView {
-            Tab("Camera", systemImage: "camera.fill"){
-                CameraView()
+        TabView(selection: $selectedTab) {
+            CameraView(camera: camera)
+                .tag(Tab.camera)
+                .tabItem {
+                    Label("Camera", systemImage: "camera.fill")
+                }
+            
+            CollectionView()
+                .tag(Tab.collection)
+                .tabItem {
+                    Label("Collection", systemImage: "photo.stack")
+                }
+        }
+        .onAppear {
+            if selectedTab == .camera {
+                camera.setup()
             }
-            Tab("Collection", systemImage: "photo.stack"){
-                CollectionView()
+        }
+        .onChange(of: selectedTab) { _, tab in
+            switch tab {
+            case .camera:
+                camera.setup()
+            default:
+                camera.stopSession()
             }
         }
     }

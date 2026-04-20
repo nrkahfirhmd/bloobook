@@ -7,9 +7,10 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct CameraView: View {
-    @StateObject var camera = CameraManager()
+    @ObservedObject var camera: CameraManager
     
     @State private var selectedItem: PhotosPickerItem?
     @State private var currentImage: UIImage?
@@ -18,7 +19,6 @@ struct CameraView: View {
     @State private var titleText = ""
     @State private var noteText = ""
     @State private var savedImage: UIImage?
-    @State private var memories: [Memory] = []
     
     let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3"]
     let stamps = ["stamp_1", "stamp_2", "stamp_3"]
@@ -41,18 +41,7 @@ struct CameraView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        
-                        NavigationLink {
-                            ShowcaseView(memories: memories)
-                        } label: {
-                            Image(systemName: "house")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-                        
+
                         Button(action: {camera.switchCamera()}) {
                             Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90.camera.fill")
                                 .font(.system(size: 24, weight: .semibold))
@@ -138,9 +127,18 @@ struct CameraView: View {
                                     await MainActor.run {
                                         currentImage = image
                                         
-                                        showSavePopup = true
+                                        selectedItem = nil
+                                    }
+                                } else {
+                                    await MainActor.run {
+                                        selectedItem = nil
                                     }
                                 }
+                            }
+                        }
+                        .onChange(of: currentImage) {_, newImage in
+                            if newImage != nil {
+                                showSavePopup = true
                             }
                         }
                     }
@@ -151,11 +149,14 @@ struct CameraView: View {
             .onAppear {
                 camera.setup()
             }
+            .onDisappear {
+                camera.stopSession()
+            }
         }
         .sheet(isPresented: $showSavePopup) {
             if let currentImage = currentImage {
                 SavePopupSheet(
-                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], memories: $memories, showSavePopup: $showSavePopup
+                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], showSavePopup: $showSavePopup
                 )
                 .padding()
                 .presentationDragIndicator(.visible)
@@ -165,5 +166,6 @@ struct CameraView: View {
 }
 
 #Preview {
-    CameraView()
+    let cameraManager = CameraManager()
+    return CameraView(camera: cameraManager)
 }

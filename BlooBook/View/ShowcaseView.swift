@@ -6,11 +6,11 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ShowcaseView: View {
-    var memories: [Memory] = []
+    @Query var memories: [Memory]
     @State private var selectedMemory: Memory?
-    @State private var showDetailPopup: Bool = false
     
     let columns = [
         GridItem(.flexible(), spacing: 16),
@@ -18,36 +18,34 @@ struct ShowcaseView: View {
     ]
     
     var body: some View {
-        LazyVGrid(columns: columns, spacing: 16) {
-            ForEach(memories) { memory in
-                VStack {
-                    Image(uiImage: memory.image)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 150)
-                    
-                    Text(memory.title).bold()
-                    
-                    Text(memory.date, style: .date)
-                        .font(Font.caption)
-                        .foregroundColor(.secondary)
-                }
-                .onTapGesture {
-                    selectedMemory = memory
-                    
-                    showDetailPopup.toggle()
+        ScrollView {
+            LazyVGrid(columns: columns, spacing: 16) {
+                ForEach(memories) { memory in
+                    VStack {
+                        if let uiImage = UIImage(data: memory.imageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 150)
+                        }
+                        
+                        Text(memory.title).bold()
+                        
+                        Text(memory.date, style: .date)
+                            .font(Font.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .onTapGesture {
+                        selectedMemory = memory
+                    }
                 }
             }
-        }
-        .padding()
-        .navigationTitle("Stamp")
-        .sheet(isPresented: $showDetailPopup) {
-            if let selectedMemory {
-                DetailSheet(memory: selectedMemory)
+            .padding()
+            .navigationTitle("Stamp")
+            .sheet(item: $selectedMemory) { memory in
+                DetailSheet(memory: memory)
                     .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
-            } else {
-                Text("No memory selected")
             }
         }
     }

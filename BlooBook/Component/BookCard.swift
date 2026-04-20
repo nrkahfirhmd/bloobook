@@ -8,7 +8,8 @@
 import SwiftUI
 
 struct BookCard: View {
-    let album: AlbumModel
+    let album: Album
+    
     var body: some View {
         NavigationLink {
             BookDetailView(album: album)
@@ -16,8 +17,8 @@ struct BookCard: View {
             VStack(alignment: .leading) {
                 ZStack(alignment: .bottomTrailing) {
                     ZStack {
-                        Rectangle()
-                            .foregroundColor(album.color)
+//                        Rectangle()
+//                            .foregroundColor(album.color)
                         Image(.book)
                             .resizable()
                             .scaledToFit()
@@ -26,19 +27,20 @@ struct BookCard: View {
                     .frame(width: 144, height: 210)
                     .clipped()
                     
-                    Image(uiImage: album.image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(height: 120)
-                        .mask(
-                            Image(.stampVertical)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 120)
-                        )
-                        .rotationEffect(.degrees(-12))
-                        .position(x: 100, y: 45)
-                    
+                    if let uiImage = UIImage(data: album.imageData) {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(height: 120)
+                            .mask(
+                                Image(.stampVertical)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(height: 120)
+                            )
+                            .rotationEffect(.degrees(-12))
+                            .position(x: 100, y: 45)
+                    }
                     
                     VStack(alignment: .trailing){
                         Text(album.name)
@@ -48,9 +50,6 @@ struct BookCard: View {
                     }
                     .padding()
                     .foregroundColor(.black)
-                    
-                    
-                    
                 }
                 .cornerRadius(2)
                 .clipped()
