@@ -56,3 +56,5 @@ playground.xcworkspace
 # === App-specific ===
 .env
 .env.local
+
+project.pbxproj

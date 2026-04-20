@@ -2,7 +2,7 @@
 //  CollectionModel.swift
 //  BlooBook
 //
-//  Created by Nurkahfi Rahmada on 20/04/26.
+// Created by Muhammad Bintang Al-Fath on 18/04/26.
 //
 
 import Foundation

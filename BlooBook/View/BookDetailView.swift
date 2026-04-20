@@ -51,9 +51,6 @@ struct BookDetailView: View {
                 }
             }
             
-            ToolbarItem(placement: .bottomBar){
-                
-            }
             ToolbarItemGroup(placement: .bottomBar) {
                 PhotosPicker(selection: $selectedItem, matching: .images) {
                     Image(systemName: "photo")
@@ -61,33 +58,33 @@ struct BookDetailView: View {
                 
                 Menu {
                     Button {
-                            background = .paper1
-                        } label: {
-                            HStack {
-                                Image(.paper1)
-                                    .resizable()
-                                    .frame(width: 30, height: 40)
-                                Text("White")
-                            }
+                        background = .paper1
+                    } label: {
+                        HStack {
+                            Image(.paper1)
+                                .resizable()
+                                .frame(width: 30, height: 40)
+                            Text("White")
                         }
+                    }
                     Button {
-                            background = .paper2
-                        } label: {
-                            HStack {
-                                Image(.paper2)
-                                    .resizable()
-                                    .frame(width: 30, height: 40)
-                                Text("Vintage")
-                            }
+                        background = .paper2
+                    } label: {
+                        HStack {
+                            Image(.paper2)
+                                .resizable()
+                                .frame(width: 30, height: 40)
+                            Text("Vintage")
                         }
-
+                    }
+                    
                 } label: {
                     Image(systemName: "paintpalette.fill")
                 }
                 
                 Spacer()
                 
-               
+                
                 
                 Button {
                     
