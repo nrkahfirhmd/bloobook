@@ -9,7 +9,7 @@ import SwiftUI
 import PhotosUI
 import SwiftData
 
-struct BookDetailView: View {
+struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
     @State private var showBackgroundPicker = false
     @State private var background: ImageResource = .paper1

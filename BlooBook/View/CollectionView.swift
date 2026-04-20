@@ -11,6 +11,7 @@ import SwiftData
 struct CollectionView: View {
     @Query var collections: [Collection]
     @Query var memories: [Memory]
+    @Query var albums: [Album]
     
     @State private var showAddCollectionSheet = false
     @State private var showAddBookSheet = false
@@ -47,6 +48,34 @@ struct CollectionView: View {
                     }
                     .padding(.bottom, 12)
                     
+                    VStack(alignment: .leading) {
+                        NavigationLink {
+                            CollectionDetailView(collection: "All Albums", albums: albums)
+                        } label: {
+                            HStack{
+                                Text("All Albums").font(.headline)
+                                Image(systemName: "chevron.right")
+                            }
+                            .foregroundColor(.primary)
+                        }
+                        ScrollView(.horizontal) {
+                            HStack(spacing: 12) {
+                                ForEach(albums) { album in
+                                    AlbumCard(
+                                        album: album
+                                    )
+                                    .frame(width: 140)
+                                    .scrollTargetLayout()
+                                }
+                            }
+                            .padding(.horizontal, 20)
+                        }
+                        .scrollTargetBehavior(.viewAligned)
+                        .scrollIndicators(.hidden)
+                        .padding(.horizontal, -20)
+                    }
+                    .padding(.bottom, 12)
+                    
                     ForEach(collections) { collection in
                         VStack(alignment: .leading) {
                             NavigationLink {
@@ -64,7 +93,7 @@ struct CollectionView: View {
                             ScrollView(.horizontal) {
                                 HStack(spacing: 12) {
                                     ForEach(collection.albums) { album in
-                                        BookCard(
+                                        AlbumCard(
                                             album: album
                                         )
                                         .frame(width: 140)
@@ -95,7 +124,7 @@ struct CollectionView: View {
                             Button {showAddBookSheet = true
                                 
                             } label: {
-                                Label("New Book", systemImage: "book.badge.plus")
+                                Label("New Album", systemImage: "book.badge.plus")
                             }
                         } label: {
                             Image(systemName: "plus")
@@ -104,13 +133,11 @@ struct CollectionView: View {
                 }
                 .sheet(isPresented: $showAddCollectionSheet) {
                     AddCollectionSheet()
-                        .presentationDetents([.medium])
-                        .presentationBackground(.white)
+                        .presentationDetents([.large])
                 }
                 .sheet(isPresented: $showAddBookSheet) {
-                    AddBookSheet()
+                    AddAlbumSheet()
                         .presentationDetents([.large])
-                        .presentationBackground(.white)
                 }
             }
         }
