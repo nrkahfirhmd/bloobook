@@ -8,30 +8,26 @@
 import SwiftUI
 
 struct DraggableStamp: View {
-    
-    @Binding var stamp: StampModel
+    var photo: Photo
     
     @State private var lastPosition: CGPoint = .zero
     @State private var lastScale: CGFloat = 1
     @State private var lastRotation: Angle = .zero
     
     var body: some View {
-        PhotoStamp(photo: stamp)
-            .position(stamp.position)
-            .scaleEffect(stamp.scale)
-            .rotationEffect(stamp.rotation)
-            
+        PhotoStamp(photo: photo)
+            .position(photo.position)
+            .scaleEffect(photo.scale)
+            .rotationEffect(photo.rotation)
             .onAppear {
-                lastPosition = stamp.position
-                lastScale = stamp.scale
-                lastRotation = stamp.rotation
+                lastPosition = photo.position
+                lastScale = photo.scale
+                lastRotation = photo.rotation
             }
-            
             .gesture(combinedGesture)
     }
     
     var combinedGesture: some Gesture {
-        
         let drag = DragGesture()
         let scale = MagnificationGesture()
         let rotate = RotationGesture()
@@ -47,13 +43,13 @@ struct DraggableStamp: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = stamp.rotation.radians
+                    let angle = photo.rotation.radians
 
                     let adjustedX = t.width * cos(angle) + t.height * sin(angle)
                     let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    let damping = 1 / sqrt(stamp.scale)
+                    let damping = 1 / sqrt(photo.scale)
 
-                    stamp.position = CGPoint(
+                    photo.position = CGPoint(
                         x: lastPosition.x + adjustedX * damping,
                         y: lastPosition.y + adjustedY * damping
                     )
@@ -63,17 +59,17 @@ struct DraggableStamp: View {
                 if let scaleValue {
                     let newScale = lastScale * scaleValue
 
-                    stamp.scale = min(max(newScale, 0.5), 3.0)
+                    photo.scale = min(max(newScale, 0.5), 3.0)
                 }
                 
                 if let rotationValue {
-                    stamp.rotation = lastRotation + rotationValue
+                    photo.rotation = lastRotation + rotationValue
                 }
             }
             .onEnded { _ in
-                lastPosition = stamp.position
-                lastScale = stamp.scale
-                lastRotation = stamp.rotation
+                lastPosition = photo.position
+                lastScale = photo.scale
+                lastRotation = photo.rotation
             }
     }
 }

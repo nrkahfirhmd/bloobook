@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CollectionView: View {
-    @State private var collections = []
+    @Query var collections: [Collection]
+    @Query var memories: [Memory]
+    
     @State private var showAddCollectionSheet = false
     @State private var showAddBookSheet = false
     var body: some View {
@@ -17,7 +20,7 @@ struct CollectionView: View {
                 VStack{
                     VStack(alignment: .leading) {
                         NavigationLink {
-                            CollectionDetailView(collection: "All Stamps", albums: AlbumModel.sampleData)
+                            ShowcaseView()
                         } label: {
                             HStack{
                                 Text("All Stamps").font(.headline)
@@ -27,12 +30,13 @@ struct CollectionView: View {
                         }
                         ScrollView(.horizontal) {
                             HStack(spacing: 12) {
-                                ForEach(StampModel.sampleData) { stamp in
-                                    PhotoStamp(
-                                        photo: stamp
-                                    )
-                                    .frame(width: 140)
-                                    .scrollTargetLayout()
+                                ForEach(memories) { memory in
+                                    if let uiImage = UIImage(data: memory.imageData) {
+                                        Image(uiImage: uiImage)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(height: 150)
+                                    }
                                 }
                             }
                             .padding(.horizontal, 20)
@@ -43,12 +47,12 @@ struct CollectionView: View {
                     }
                     .padding(.bottom, 12)
                     
-                    ForEach(CollectionModel.sampleData) { collection in
+                    ForEach(collections) { collection in
                         VStack(alignment: .leading) {
                             NavigationLink {
                                 CollectionDetailView(
                                     collection: collection.name,
-                                    albums: collection.album
+                                    albums: collection.albums
                                 )
                             } label: {
                                 HStack{
@@ -59,7 +63,7 @@ struct CollectionView: View {
                             }
                             ScrollView(.horizontal) {
                                 HStack(spacing: 12) {
-                                    ForEach(AlbumModel.sampleData) { album in
+                                    ForEach(collection.albums) { album in
                                         BookCard(
                                             album: album
                                         )

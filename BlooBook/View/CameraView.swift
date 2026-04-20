@@ -41,18 +41,7 @@ struct CameraView: View {
                 VStack {
                     HStack {
                         Spacer()
-                        
-                        NavigationLink {
-                            ShowcaseView()
-                        } label: {
-                            Image(systemName: "house")
-                                .font(.system(size: 24, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding()
-                                .background(.ultraThinMaterial)
-                                .clipShape(Circle())
-                        }
-                        
+
                         Button(action: {camera.switchCamera()}) {
                             Image(systemName: "arrow.trianglehead.2.clockwise.rotate.90.camera.fill")
                                 .font(.system(size: 24, weight: .semibold))
