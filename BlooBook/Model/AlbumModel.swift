@@ -12,7 +12,7 @@ import SwiftData
 @Model
 class Album {
     var id = UUID()
-    var color: String
+    var colorData: Data
     var imageData: Data
     var name: String
     var date: Date
@@ -20,16 +20,21 @@ class Album {
     @Relationship(deleteRule: .nullify)
     var photos: [Photo]
     
-    @Relationship(deleteRule: .nullify)
-    var collection: [Collection]
+    var collections: [Collection] = []
     
-    init(id: UUID = UUID(), color: String, imageData: Data, name: String, date: Date, photos: [Photo], collection: [Collection]) {
-        self.id = id
-        self.color = color
+    init(colorData: Data, imageData: Data, name: String, date: Date, photos: [Photo]) {
+        self.colorData = colorData
         self.imageData = imageData
         self.name = name
         self.date = date
         self.photos = photos
-        self.collection = collection
     }
 }
+
+extension Album {
+    var color: Color {
+        colorData.toColor() ?? .gray
+    }
+}
+
+

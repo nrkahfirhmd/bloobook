@@ -6,22 +6,27 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct CollectionDetailView: View {
     var collection: String
     var albums: [Album]
+    @Query private var newAlbums: [Album]
+    @State private var showAlbumPicker = false
+    @State private var selectedAlbums: Set<Album> = []
     
-    @State private var columns = [
+    var columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
     ]
     
     var body: some View {
+        
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 24){
                     ForEach(albums) { album in
-                        BookCard(
+                        AlbumCard(
                             album: album
                         )
                         .frame(width: 140)
@@ -33,10 +38,21 @@ struct CollectionDetailView: View {
                 .navigationBarTitleDisplayMode(.inline)
             }
             .scrollIndicators(.hidden)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    
+                    Button {
+                        showAlbumPicker = true
+                    } label: {
+                        Image(systemName: "plus")
+                    }
+                    
+                }
+            }
+            .sheet(isPresented: $showAlbumPicker) {
+                AlbumPickerSheet(albums: newAlbums, selectedAlbums: $selectedAlbums)
+                    .presentationDetents([.large])
+            }
         }
     }
-}
-
-#Preview {
-//    CollectionDetailView(collection: "Book", albums: AlbumModel.sampleData)
 }

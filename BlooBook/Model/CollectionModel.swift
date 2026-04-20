@@ -13,11 +13,10 @@ class Collection {
     var id = UUID()
     var name: String
     
-    @Relationship(deleteRule: .nullify)
-    var albums: [Album]
+    @Relationship(inverse: \Album.collections)
+    var albums: [Album] = []
     
-    init(id: UUID = UUID(), name: String, albums: [Album]) {
-        self.id = id
+    init(name: String, albums: [Album] = []) {
         self.name = name
         self.albums = albums
     }
