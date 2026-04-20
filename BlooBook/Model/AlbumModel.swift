@@ -7,11 +7,29 @@
 
 import Foundation
 import SwiftUI
+import SwiftData
 
-struct AlbumModel : Identifiable{
-    let id = UUID()
+@Model
+class Album {
+    var id = UUID()
     var color: Color
-    var image: UIImage
+    var imageData: Data
     var name: String
     var date: Date
+    
+    @Relationship(deleteRule: .nullify)
+    var photos: [Photo]
+    
+    @Relationship(deleteRule: .nullify)
+    var collection: [Collection]
+    
+    init(id: UUID = UUID(), color: Color, imageData: Data, name: String, date: Date, photos: [Photo], collection: [Collection]) {
+        self.id = id
+        self.color = color
+        self.imageData = imageData
+        self.name = name
+        self.date = date
+        self.photos = photos
+        self.collection = collection
+    }
 }

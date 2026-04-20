@@ -4,13 +4,24 @@
 //
 //  Created by Nurkahfi Rahmada on 17/04/26.
 //
+
 import Foundation
 import SwiftUI
+import SwiftData
 
-struct Memory: Identifiable {
-    let id = UUID()
-    let image: UIImage
-    let title: String
-    let note: String
-    let date: Date
+@Model
+class Memory {
+    var id = UUID()
+    var imageData: Data
+    var title: String
+    var note: String
+    var date: Date
+    
+    init(image: UIImage, title: String, note: String, date: Date) {
+        self.id = UUID()
+        self.imageData = image.jpegData(compressionQuality: 0.7) ?? Data()
+        self.title = title
+        self.note = note
+        self.date = date
+    }
 }

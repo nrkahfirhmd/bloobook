@@ -6,9 +6,10 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct ShowcaseView: View {
-    var memories: [Memory] = []
+    @Query var memories: [Memory]
     @State private var selectedMemory: Memory?
     
     let columns = [
@@ -21,10 +22,12 @@ struct ShowcaseView: View {
             LazyVGrid(columns: columns, spacing: 16) {
                 ForEach(memories) { memory in
                     VStack {
-                        Image(uiImage: memory.image)
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 150)
+                        if let uiImage = UIImage(data: memory.imageData) {
+                            Image(uiImage: uiImage)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 150)
+                        }
                         
                         Text(memory.title).bold()
                         

@@ -34,10 +34,12 @@ struct DetailSheet: View {
                 }
             }
             
-            Image(uiImage: memory.image)
-                .resizable()
-                .scaledToFit()
-                .padding(.top)
+            if let uiImage = UIImage(data: memory.imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(.top)
+            }
             
             Text(memory.note)
                 .italic()

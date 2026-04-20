@@ -7,6 +7,7 @@
 
 import SwiftUI
 import PhotosUI
+import SwiftData
 
 struct CameraView: View {
     @ObservedObject var camera: CameraManager
@@ -18,7 +19,6 @@ struct CameraView: View {
     @State private var titleText = ""
     @State private var noteText = ""
     @State private var savedImage: UIImage?
-    @State private var memories: [Memory] = []
     
     let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3"]
     let stamps = ["stamp_1", "stamp_2", "stamp_3"]
@@ -43,7 +43,7 @@ struct CameraView: View {
                         Spacer()
                         
                         NavigationLink {
-                            ShowcaseView(memories: memories)
+                            ShowcaseView()
                         } label: {
                             Image(systemName: "house")
                                 .font(.system(size: 24, weight: .semibold))
@@ -167,7 +167,7 @@ struct CameraView: View {
         .sheet(isPresented: $showSavePopup) {
             if let currentImage = currentImage {
                 SavePopupSheet(
-                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], memories: $memories, showSavePopup: $showSavePopup
+                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], showSavePopup: $showSavePopup
                 )
                 .padding()
                 .presentationDragIndicator(.visible)

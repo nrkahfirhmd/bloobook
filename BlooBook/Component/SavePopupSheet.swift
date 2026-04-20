@@ -6,11 +6,13 @@
 //
 
 import SwiftUI
+import SwiftData
 
 struct SavePopupSheet: View {
+    @Environment(\.modelContext) private var context
+    
     var currentImage: UIImage?
     var stamp: String?
-    @Binding var memories: [Memory]
     @Binding var showSavePopup: Bool
     
     @State private var scale: CGFloat = 1
@@ -134,7 +136,7 @@ struct SavePopupSheet: View {
                         
                         let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
 
-                        memories.append(memory)
+                        context.insert(memory)
                     }
                 }
                 showSavePopup = false
@@ -315,14 +317,6 @@ struct SavePopupSheet: View {
     SavePopupSheet(
            currentImage: UIImage(named: "temp"),
            stamp: "stamp_1",
-           memories: .constant([
-               Memory(
-                   image: UIImage(named: "temp")!,
-                   title: "Dynamic Duo",
-                   note: "Handsome Duo",
-                   date: Date()
-               )
-           ]),
            showSavePopup: .constant(true)
        )
 }
