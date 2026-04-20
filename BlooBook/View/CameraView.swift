@@ -9,7 +9,7 @@ import SwiftUI
 import PhotosUI
 
 struct CameraView: View {
-    @StateObject var camera = CameraManager()
+    @ObservedObject var camera: CameraManager
     
     @State private var selectedItem: PhotosPickerItem?
     @State private var currentImage: UIImage?
@@ -138,9 +138,18 @@ struct CameraView: View {
                                     await MainActor.run {
                                         currentImage = image
                                         
-                                        showSavePopup = true
+                                        selectedItem = nil
+                                    }
+                                } else {
+                                    await MainActor.run {
+                                        selectedItem = nil
                                     }
                                 }
+                            }
+                        }
+                        .onChange(of: currentImage) {_, newImage in
+                            if newImage != nil {
+                                showSavePopup = true
                             }
                         }
                     }
@@ -150,6 +159,9 @@ struct CameraView: View {
             .background(Color.black.opacity(0.8).edgesIgnoringSafeArea(.all))
             .onAppear {
                 camera.setup()
+            }
+            .onDisappear {
+                camera.stopSession()
             }
         }
         .sheet(isPresented: $showSavePopup) {
@@ -165,5 +177,6 @@ struct CameraView: View {
 }
 
 #Preview {
-    CameraView()
+    let cameraManager = CameraManager()
+    return CameraView(camera: cameraManager)
 }

@@ -13,18 +13,28 @@ class CameraManager: NSObject, ObservableObject {
     let session = AVCaptureSession()
     private let output = AVCapturePhotoOutput()
     
+    private let sessionQueue = DispatchQueue(label: "camera.session.queue")
+    
     @Published var isFrontCamera = false
     @Published var capturedImage: UIImage?
     
     func setup() {
+        sessionQueue.async {
+            self.configureSession()
+        }
+    }
+    
+    private func configureSession() {
         session.beginConfiguration()
         
-        guard let device = getCamera() else { return }
-        let input = try! AVCaptureDeviceInput(device: device)
+        session.inputs.forEach { session.removeInput($0) }
         
-        if session.canAddInput(input) {
-            session.addInput(input)
-        }
+        guard let device = getCamera(),
+              let input = try? AVCaptureDeviceInput(device: device),
+              session.canAddInput(input)
+        else { return }
+        
+        session.addInput(input)
         
         if session.canAddOutput(output) {
             session.addOutput(output)
@@ -42,8 +52,20 @@ class CameraManager: NSObject, ObservableObject {
     
     func switchCamera() {
         isFrontCamera.toggle()
-        session.inputs.forEach { session.isRunning ? session.removeInput($0) : () }
-        setup()
+        
+        sessionQueue.async {
+            self.session.beginConfiguration()
+            
+            self.session.inputs.forEach { self.session.removeInput($0) }
+            
+            if let device = self.getCamera(),
+               let input = try? AVCaptureDeviceInput(device: device),
+               self.session.canAddInput(input) {
+                self.session.addInput(input)
+            }
+        }
+        
+        session.commitConfiguration()
     }
     
     func capturePhoto() {
@@ -51,6 +73,14 @@ class CameraManager: NSObject, ObservableObject {
         settings.flashMode = .off
         
         output.capturePhoto(with: settings, delegate: self)
+    }
+    
+    func stopSession() {
+        sessionQueue.async {
+            if self.session.isRunning {
+                self.session.stopRunning()
+            }
+        }
     }
 }
 

@@ -26,7 +26,7 @@ struct DetailSheet: View {
                 
                 Button(action: {} ) {
                     Image(systemName: "pencil.and.outline")
-                        .font(.system(size: 24, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.primary)
                         .padding()
                         .background(.ultraThinMaterial)
@@ -37,7 +37,7 @@ struct DetailSheet: View {
             Image(uiImage: memory.image)
                 .resizable()
                 .scaledToFit()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top)
             
             Text(memory.note)
                 .italic()

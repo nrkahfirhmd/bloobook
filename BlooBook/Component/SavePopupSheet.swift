@@ -85,43 +85,38 @@ struct SavePopupSheet: View {
             }
             
             VStack(alignment: .leading) {
-                Text("Title")
-                    .font(.title3)
-                    .fontWeight(.medium)
-                
-                VStack(spacing: 0) {
-                    TextField("Meow", text: $titleText)
-                        .padding(.bottom, 5)
-                        .padding(.horizontal, 5)
-                    Divider()
-                            .background(Color.gray)
+                HStack(spacing: 2) {
+                    Text("Title")
+                        .font(.title3)
+                        .fontWeight(.medium)
+                    
+                    Text("*")
+                        .foregroundStyle(Color.red)
                 }
+                
+                TextField("Meow", text: $titleText)
+                    .padding(16)
+                    .background(.regularMaterial)
+                    .cornerRadius(20)
             }
             
             VStack(alignment: .leading) {
-                Text("Note (max. 100 words)")
+                Text("Note (max. 30 words)")
                     .font(.title3)
                     .fontWeight(.medium)
                 
-                ZStack(alignment: .topLeading) {
-                    if noteText.isEmpty {
-                        Text("Write your note...")
-                            .foregroundColor(.gray.opacity(0.5))
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 10)
+                TextField("Add your note", text: $noteText, axis: .vertical)
+                    .padding(16)
+                    .background(.regularMaterial)
+                    .cornerRadius(20)
+                    .lineLimit(1...3)
+                    .onChange(of: noteText) { _, newValue in
+                        let words = newValue.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                        
+                        if words.count > 30 {
+                            noteText = words.prefix(30).joined(separator: " ")
+                        }
                     }
-                    
-                    TextEditor(text: $noteText)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
-                        .scrollContentBackground(.hidden)
-                        .background(Color.clear)
-                }
-                .background() {
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.gray.opacity(0.5))
-                }
-                .frame(height: 100)
             }
             
             Button(action: {
@@ -155,6 +150,7 @@ struct SavePopupSheet: View {
                 .background(Color.blue)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
             }
+            .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
             
             Button("Cancel") {
                 showSavePopup = false
