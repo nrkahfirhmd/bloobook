@@ -155,10 +155,19 @@ struct CameraView: View {
         }
         .sheet(isPresented: $showSavePopup) {
             if let currentImage = currentImage {
-                SavePopupSheet(
-                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], showSavePopup: $showSavePopup
+                let selectedStampBinding: Binding<String> = Binding(
+                    get: { stamps[selectedFrameIndex] },
+                    set: { newValue in
+                        if let newIndex = stamps.firstIndex(of: newValue) {
+                            selectedFrameIndex = newIndex
+                        }
+                    }
                 )
-                .padding()
+                SavePopupSheet(
+                    currentImage: currentImage,
+                    stamp: selectedStampBinding,
+                    showSavePopup: $showSavePopup
+                )
                 .presentationDragIndicator(.visible)
             }
         }
