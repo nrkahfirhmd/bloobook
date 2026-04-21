@@ -129,12 +129,7 @@ struct CameraView: View {
                                         
                                         selectedItem = nil
                                     }
-                                } else {
-                                    await MainActor.run {
-                                        selectedItem = nil
-                                    }
-                                }
-                            }
+                                }                             }
                         }
                         .onChange(of: currentImage) {_, newImage in
                             if newImage != nil {
@@ -155,10 +150,20 @@ struct CameraView: View {
         }
         .sheet(isPresented: $showSavePopup) {
             if let currentImage = currentImage {
-                SavePopupSheet(
-                    currentImage: currentImage, stamp: stamps[selectedFrameIndex], showSavePopup: $showSavePopup
+                let selectedStampBinding: Binding<String> = Binding(
+                    get: { stamps[selectedFrameIndex] },
+                    set: { newValue in
+                        if let newIndex = stamps.firstIndex(of: newValue) {
+                            selectedFrameIndex = newIndex
+                        }
+                    }
                 )
-                .padding()
+                SavePopupSheet(
+                    currentImage: currentImage,
+                    stamp: selectedStampBinding,
+                    showSavePopup: $showSavePopup,
+                    album: nil
+                )
                 .presentationDragIndicator(.visible)
             }
         }

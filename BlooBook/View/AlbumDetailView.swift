@@ -11,13 +11,24 @@ import SwiftData
 
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
+    
     @State private var showBackgroundPicker = false
     @State private var background: ImageResource = .paper1
     @State private var selectedItem: PhotosPickerItem?
+    @State private var currentImage: UIImage?
+    @State private var showSavePopup: Bool = false
+    @State private var defaultStamp: String = "stamp_1"
     @State private var showMemoryPicker: Bool = false
     @Query var memories : [Memory]
+    @Query var photos: [Photo]
     
+    init(album: Album) {
+        self.album = album
+    }
     
+    var filteredPhotos: [Photo] {
+        photos.filter { $0.albums.contains(album) }
+    }
     
     var album: Album
     
@@ -40,11 +51,20 @@ struct AlbumDetailView: View {
         .onChange(of: selectedItem) {
             Task {
                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
-                    
-                    //                    addStamp(image: uiImage)
+                    let uiImage = UIImage(data: data) {
+                    currentImage = uiImage
+
                     selectedItem = nil
+                } else {
+                    await MainActor.run {
+                        selectedItem = nil
+                    }
                 }
+            }
+        }
+        .onChange(of: currentImage) { _, newImage in
+            if newImage != nil {
+                showSavePopup = true
             }
         }
         .toolbar {
@@ -109,38 +129,20 @@ struct AlbumDetailView: View {
                 }
             }
         }
-        
-        
         .toolbar(.hidden, for: .tabBar)
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showSavePopup) {
+            SavePopupSheet(currentImage: currentImage, stamp: $defaultStamp, showSavePopup: $showSavePopup, album: album)
+                .presentationDragIndicator(.visible)
+        }
         .sheet(isPresented: $showMemoryPicker) {
-            
             PhotoPickerSheet(memories: memories, album: album)
                 .padding()
                 .presentationDragIndicator(.visible)
             
         }
     }
-    
-    
-    //    func addPhoto(image: UIImage) {
-    //        let newMemory = Memory(image: UIImage, title: String, note: <#T##String#>, date: <#T##Date#>)
-    //
-    //        let newPhoto = Photo(position: CGPoint(x: 200, y: 350), memory: <#T##Memory#>, album: <#T##[Album]#>)
-    //
-    //        let newStamp = StampModel(
-    //            position: CGPoint(x: 200, y: 350),
-    //            image: image,
-    //            source: nil,
-    //            stamp: .stampVertical
-    //        )
-    //
-    //        withAnimation(.spring()) {
-    //            stamps.append(newStamp)
-    //        }
-    //    }
-    
 }
 

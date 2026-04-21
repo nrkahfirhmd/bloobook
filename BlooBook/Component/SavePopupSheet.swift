@@ -12,8 +12,9 @@ struct SavePopupSheet: View {
     @Environment(\.modelContext) private var context
     
     var currentImage: UIImage?
-    var stamp: String?
+    @Binding var stamp: String
     @Binding var showSavePopup: Bool
+    var album: Album?
     
     @State private var scale: CGFloat = 1
     @State private var offset: CGSize = .init(width: 0, height: 0)
@@ -30,136 +31,186 @@ struct SavePopupSheet: View {
     private let minScale: CGFloat = 0.5
     private let maxScale: CGFloat = 3
     
+    private let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3"]
+    private let stamps = ["stamp_1", "stamp_2", "stamp_3"]
+    
     var body: some View {
-        VStack(spacing: 20) {
-            Text("Save Memory")
-                .font(.title)
-                .bold()
-            
-            if let image = currentImage {
-                ZStack {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .scaleEffect(scale)
-                        .offset(offset)
-                        .simultaneousGesture(
-                            DragGesture()
-                                .onChanged { value in
-                                    let newOffset = CGSize(
-                                        width: lastOffset.width + value.translation.width,
-                                        height: lastOffset.height + value.translation.height
-                                    )
-                                    offset = clampOffset(newOffset, scale: scale)
-                                }
-                                .onEnded{ _ in lastOffset = offset }
+        ScrollView {
+            VStack(spacing: 20) {
+                Text("Save Memory")
+                    .font(.title)
+                    .bold()
+                    .padding(.top)
+                
+                VStack {
+                    if let image = currentImage {
+                        ZStack {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .scaleEffect(scale)
+                                .offset(offset)
+                                .simultaneousGesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            let newOffset = CGSize(
+                                                width: lastOffset.width + value.translation.width,
+                                                height: lastOffset.height + value.translation.height
+                                            )
+                                            offset = clampOffset(newOffset, scale: scale)
+                                        }
+                                        .onEnded{ _ in lastOffset = offset }
+                                )
+                                .simultaneousGesture(
+                                    MagnificationGesture()
+                                        .onChanged { value in
+                                            let newScale = lastScale * value
+                                            scale = clampScale(newScale)
+                                            
+                                            offset = clampOffset(offset, scale: scale)
+                                        }
+                                        .onEnded { _ in
+                                            lastScale = scale
+                                            lastOffset = offset
+                                        }
+                                )
+                        }
+                        .frame(width: 500, height: 500)
+                        .clipped()
+                        .mask {
+                            Image(stamp)
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(0.55)
+                        }
+                        .onAppear {
+                            maskBounds = calculateMaskBounds()
+                        }
+                        .onChange(of: stamp) { _, _ in
+                            maskBounds = calculateMaskBounds()
+                        }
+                        .frame(
+                            width: maskBounds.width,
+                            height: maskBounds.height
                         )
-                        .simultaneousGesture(
-                            MagnificationGesture()
-                                .onChanged { value in
-                                    let newScale = lastScale * value
-                                    scale = clampScale(newScale)
-                                    
-                                    offset = clampOffset(offset, scale: scale)
-                                }
-                                .onEnded { _ in
-                                    lastScale = scale
-                                    lastOffset = offset
-                                }
-                        )
-                }
-                .frame(width: 500, height: 500)
-                .clipped()
-                .mask {
-                    Image(stamp!)
-                        .resizable()
-                        .scaledToFit()
-                        .scaleEffect(0.55)
-                }
-                .onAppear {
-                    maskBounds = calculateMaskBounds()
-                }
-                .frame(
-                    width: maskBounds.width,
-                    height: maskBounds.height
-                )
-                .clipped()
-            }
-            
-            VStack(alignment: .leading) {
-                HStack(spacing: 2) {
-                    Text("Title")
-                        .font(.title3)
-                        .fontWeight(.medium)
+                        .clipped()
+                    }
                     
-                    Text("*")
-                        .foregroundStyle(Color.red)
+                    Text("Adjust the image as you like")
+                        .font(.caption2)
+                        .italic()
+                        .foregroundStyle(.tertiary)
                 }
                 
-                TextField("Meow", text: $titleText)
-                    .padding(16)
-                    .background(.regularMaterial)
-                    .cornerRadius(20)
-            }
-            
-            VStack(alignment: .leading) {
-                Text("Note (max. 30 words)")
-                    .font(.title3)
-                    .fontWeight(.medium)
-                
-                TextField("Add your note", text: $noteText, axis: .vertical)
-                    .padding(16)
-                    .background(.regularMaterial)
-                    .cornerRadius(20)
-                    .lineLimit(1...3)
-                    .onChange(of: noteText) { _, newValue in
-                        let words = newValue.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-                        
-                        if words.count > 30 {
-                            noteText = words.prefix(30).joined(separator: " ")
+                HStack(spacing: 40) {
+                    ForEach(frames, id: \.self) { frame in
+                        HStack {
+                            Image(frame)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 50)
+                                .onTapGesture {
+                                    selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
+                                }
+                                .padding()
                         }
                     }
-            }
-            
-            Button(action: {
-                if let image = currentImage {
-                    if let stamp = stamp,
-                       let mask = UIImage(named: stamp) {
-                        let final = renderFinalImage(
-                            photo: image,
-                            maskImage: mask,
-                            scale: scale,
-                            offset: offset,
-                            canvasSize: CGSize(width: 500, height: 500)
-                        )
-                        savedImage = final
+                }
+                .frame(height: 100)
+                .frame(maxWidth: .infinity)
+                .ignoresSafeArea()
+                .background(Color.gray.opacity(0.5))
+                .onChange(of: selectedFrameIndex) { _, newValue in
+                    stamp = stamps[newValue]
+                }
+                
+                VStack {
+                    VStack(alignment: .leading) {
+                        HStack(spacing: 2) {
+                            Text("Title")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            
+                            Text("*")
+                                .foregroundStyle(Color.red)
+                        }
                         
-                        let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
-
-                        context.insert(memory)
+                        TextField("Meow", text: $titleText)
+                            .padding(16)
+                            .background(.regularMaterial)
+                            .cornerRadius(20)
                     }
+                    
+                    VStack(alignment: .leading) {
+                        Text("Note (max. 30 words)")
+                            .font(.title3)
+                            .fontWeight(.medium)
+                        
+                        TextField("Meow is cat sound", text: $noteText, axis: .vertical)
+                            .padding(16)
+                            .background(.regularMaterial)
+                            .cornerRadius(20)
+                            .lineLimit(1...3)
+                            .onChange(of: noteText) { _, newValue in
+                                let words = newValue.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                                
+                                if words.count > 30 {
+                                    noteText = words.prefix(30).joined(separator: " ")
+                                }
+                            }
+                    }
+                    
+                    Button(action: {
+                        if let image = currentImage {
+                            if let mask = UIImage(named: stamp) {
+                                let final = renderFinalImage(
+                                    photo: image,
+                                    maskImage: mask,
+                                    scale: scale,
+                                    offset: offset,
+                                    canvasSize: CGSize(width: 500, height: 500)
+                                )
+                                savedImage = final
+                                
+                                let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
+                                
+                                context.insert(memory)
+                                
+                                let photo = Photo(position: CGPoint(x: 200, y: 350), scale: 1, rotation: Angle(degrees: 0), memory: memory, albums: album != nil ? [album!] : [])
+                                
+                                withAnimation(.spring()) {
+                                    context.insert(photo)
+                                    
+                                    if let album = album {
+                                        album.photos.append(photo)
+                                    }
+                                }
+                            }
+                        }
+                        showSavePopup = false
+                    }) {
+                        HStack {
+                            Image(systemName: "photo.artframe")
+                            
+                            Text("Save")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .padding()
+                        .background(Color.blue)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                    }
+                    .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .padding(.top)
+                    
+                    Button("Cancel") {
+                        showSavePopup = false
+                    }
+                    .padding(.vertical)
                 }
-                showSavePopup = false
-            }) {
-                HStack {
-                    Image(systemName: "photo.artframe")
-
-                    Text("Save")
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .padding()
-                .background(Color.blue)
-                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .padding(.horizontal)
             }
-            .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
-            
-            Button("Cancel") {
-                showSavePopup = false
-            }
-            .padding(.vertical)
         }
-        .padding()
     }
     
     func clampScale(_ newScale: CGFloat) -> CGFloat {
@@ -196,8 +247,7 @@ struct SavePopupSheet: View {
     }
     
     func calculateMaskBounds() -> CGRect {
-        guard let stamp = stamp,
-              let maskImage = UIImage(named: stamp) else {
+        guard let maskImage = UIImage(named: stamp) else {
             return .zero
         }
         
@@ -239,7 +289,7 @@ struct SavePopupSheet: View {
         
         let image = renderer.image { context in
             let cg = context.cgContext
-                    
+            
             let maskAspect = maskImage.size.width / maskImage.size.height
             let canvasAspect = canvasSize.width / canvasSize.height
             
@@ -314,10 +364,12 @@ struct SavePopupSheet: View {
 }
 
 #Preview {
+    let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [])
     SavePopupSheet(
-           currentImage: UIImage(named: "temp"),
-           stamp: "stamp_1",
-           showSavePopup: .constant(true)
-       )
+        currentImage: UIImage(named: "temp"),
+        stamp: .constant("stamp_1"),
+        showSavePopup: .constant(true),
+        album: mockAlbum
+    )
 }
 

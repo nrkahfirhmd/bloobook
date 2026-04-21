@@ -12,8 +12,7 @@ struct DraggablePhoto: View {
     
     @State private var lastPosition: CGPoint = .zero
     @State private var lastScale: CGFloat = 1
-    @State private var lastRotation: Angle = .zero
-    
+    @State private var lastRotation: Double = 0
     
     var body: some View {
         Group
@@ -27,7 +26,7 @@ struct DraggablePhoto: View {
         }
         .position(photo.position)
         .scaleEffect(photo.scale)
-        .rotationEffect(photo.rotation)
+        .rotationEffect(photo.rotationAngle)
         .onAppear {
             lastPosition = photo.position
             lastScale = photo.scale
@@ -52,18 +51,14 @@ struct DraggablePhoto: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = photo.rotation.radians
-                    
+                    let angle = photo.rotationAngle.radians
                     let adjustedX = t.width * cos(angle) + t.height * sin(angle)
                     let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
                     let safeScale = max(photo.scale, 0.5)
                     let damping = 1 / sqrt(safeScale)
-                    
-                    photo.position = CGPoint(
-                        x: lastPosition.x + adjustedX * damping,
-                        y: lastPosition.y + adjustedY * damping
-                    )
-                    
+
+                    photo.posX = lastPosition.x + adjustedX * damping
+                    photo.posY = lastPosition.y + adjustedY * damping          
                 }
                 
                 if let scaleValue {
@@ -73,7 +68,7 @@ struct DraggablePhoto: View {
                 }
                 
                 if let rotationValue {
-                    photo.rotation = lastRotation + rotationValue
+                    photo.rotation = lastRotation + rotationValue.radians
                 }
             }
             .onEnded { _ in
