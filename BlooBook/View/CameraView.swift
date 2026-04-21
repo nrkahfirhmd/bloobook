@@ -129,12 +129,7 @@ struct CameraView: View {
                                         
                                         selectedItem = nil
                                     }
-                                } else {
-                                    await MainActor.run {
-                                        selectedItem = nil
-                                    }
-                                }
-                            }
+                                }                             }
                         }
                         .onChange(of: currentImage) {_, newImage in
                             if newImage != nil {
@@ -166,7 +161,8 @@ struct CameraView: View {
                 SavePopupSheet(
                     currentImage: currentImage,
                     stamp: selectedStampBinding,
-                    showSavePopup: $showSavePopup
+                    showSavePopup: $showSavePopup,
+                    album: nil
                 )
                 .presentationDragIndicator(.visible)
             }

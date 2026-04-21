@@ -11,11 +11,24 @@ import SwiftData
 
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
+    
     @State private var showBackgroundPicker = false
     @State private var background: ImageResource = .paper1
     @State private var selectedItem: PhotosPickerItem?
+    @State private var currentImage: UIImage?
+    @State private var showSavePopup: Bool = false
+    @State private var defaultStamp: String = "stamp_1"
     
     @Query var photos: [Photo]
+    
+    init(album: Album) {
+        self.album = album
+        _photos = Query()
+    }
+    
+    var filteredPhotos: [Photo] {
+        photos.filter { $0.albums.contains(album) }
+    }
     
     var album: Album
     
@@ -39,10 +52,19 @@ struct AlbumDetailView: View {
             Task {
                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
                    let uiImage = UIImage(data: data) {
+                    currentImage = uiImage
                     
-//                    addStamp(image: uiImage)
                     selectedItem = nil
+                } else {
+                    await MainActor.run {
+                        selectedItem = nil
+                    }
                 }
+            }
+        }
+        .onChange(of: currentImage) { _, newImage in
+            if newImage != nil {
+                showSavePopup = true
             }
         }
         .toolbar {
@@ -107,12 +129,14 @@ struct AlbumDetailView: View {
                 }
             }
         }
-        
-        
         .toolbar(.hidden, for: .tabBar)
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $showSavePopup) {
+            SavePopupSheet(currentImage: currentImage, stamp: $defaultStamp, showSavePopup: $showSavePopup, album: album)
+                .presentationDragIndicator(.visible)
+        }
     }
     
 //    func addPhoto(image: UIImage) {

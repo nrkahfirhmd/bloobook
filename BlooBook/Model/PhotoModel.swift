@@ -13,21 +13,34 @@ import SwiftData
 class Photo {
     var id = UUID()
     
-    var position: CGPoint
-    var scale: CGFloat
-    var rotation: Angle
+    var posX: Double
+    var posY: Double
+    var scale: Double
+    var rotation: Double
     
     var memory: Memory
     
     @Relationship(deleteRule: .nullify)
-    var album: [Album]
+    var albums: [Album] = []
     
-    init(id: UUID = UUID(), position: CGPoint, scale: CGFloat, rotation: Angle, memory: Memory, album: [Album]) {
-        self.id = id
-        self.position = position
-        self.scale = scale
-        self.rotation = rotation
+    init(position: CGPoint, scale: CGFloat, rotation: Angle, memory: Memory, albums: [Album]) {
+        self.posX = position.x
+        self.posY = position.y
+        self.scale = Double(scale)
+        self.rotation = rotation.radians
         self.memory = memory
-        self.album = album
+        self.albums = albums
+    }
+    
+    var position: CGPoint {
+        CGPoint(x: posX, y: posY)
+    }
+    
+    var rotationAngle: Angle {
+        Angle(radians: rotation)
+    }
+    
+    var scaleCGFloat: CGFloat {
+        CGFloat(scale)
     }
 }

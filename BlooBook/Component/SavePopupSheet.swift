@@ -14,6 +14,7 @@ struct SavePopupSheet: View {
     var currentImage: UIImage?
     @Binding var stamp: String
     @Binding var showSavePopup: Bool
+    var album: Album?
     
     @State private var scale: CGFloat = 1
     @State private var offset: CGSize = .init(width: 0, height: 0)
@@ -174,6 +175,16 @@ struct SavePopupSheet: View {
                                 let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
                                 
                                 context.insert(memory)
+                                
+                                let photo = Photo(position: CGPoint(x: 200, y: 350), scale: 1, rotation: Angle(degrees: 0), memory: memory, albums: album != nil ? [album!] : [])
+                                
+                                withAnimation(.spring()) {
+                                    context.insert(photo)
+                                    
+                                    if let album = album {
+                                        album.photos.append(photo)
+                                    }
+                                }
                             }
                         }
                         showSavePopup = false
@@ -353,10 +364,12 @@ struct SavePopupSheet: View {
 }
 
 #Preview {
+    let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [])
     SavePopupSheet(
         currentImage: UIImage(named: "temp"),
         stamp: .constant("stamp_1"),
-        showSavePopup: .constant(true)
+        showSavePopup: .constant(true),
+        album: mockAlbum
     )
 }
 
