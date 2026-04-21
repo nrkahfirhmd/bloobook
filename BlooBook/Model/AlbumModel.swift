@@ -17,7 +17,7 @@ class Album {
     var name: String
     var date: Date
     
-    @Relationship(deleteRule: .nullify)
+    @Relationship(inverse: \Photo.albums)
     var photos: [Photo]
     
     var collections: [Collection] = []
