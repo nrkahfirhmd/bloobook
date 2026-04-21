@@ -20,10 +20,10 @@ struct AlbumDetailView: View {
     @State private var defaultStamp: String = "stamp_1"
     @State private var showMemoryPicker: Bool = false
     @Query var memories : [Memory]
+    @Query var photos: [Photo]
     
     init(album: Album) {
         self.album = album
-        _photos = Query()
     }
     
     var filteredPhotos: [Photo] {

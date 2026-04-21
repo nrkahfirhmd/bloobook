@@ -92,7 +92,10 @@ struct PhotoPickerSheet: View {
                         x: CGFloat.random(in: 100...300),
                         y: CGFloat.random(in: 200...500)
                     ),
-                    memory: memory
+                    scale: 1,
+                    rotation: Angle(degrees: 0),
+                    memory: memory,
+                    albums: [album]
                 )
                 
                 context.insert(photo)
