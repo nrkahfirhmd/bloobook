@@ -18,8 +18,8 @@ struct AlbumDetailView: View {
     @State private var currentImage: UIImage?
     @State private var showSavePopup: Bool = false
     @State private var defaultStamp: String = "stamp_1"
-    
-    @Query var photos: [Photo]
+    @State private var showMemoryPicker: Bool = false
+    @Query var memories : [Memory]
     
     init(album: Album) {
         self.album = album
@@ -39,21 +39,21 @@ struct AlbumDetailView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
             
-            if photos.isEmpty {
+            if album.photos.isEmpty {
                 Text("Tap + to add stamp")
                     .foregroundStyle(.gray)
             }
             
-            ForEach(photos) { photo in
-                DraggableStamp(photo: photo)
+            ForEach(album.photos) { photo in
+                DraggablePhoto(photo: photo)
             }
         }
         .onChange(of: selectedItem) {
             Task {
                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
-                   let uiImage = UIImage(data: data) {
+                    let uiImage = UIImage(data: data) {
                     currentImage = uiImage
-                    
+
                     selectedItem = nil
                 } else {
                     await MainActor.run {
@@ -112,7 +112,7 @@ struct AlbumDetailView: View {
                 
                 
                 Button {
-                    
+                    showMemoryPicker.toggle()
                 } label: {
                     Image(systemName: "plus")
                 }
@@ -137,24 +137,12 @@ struct AlbumDetailView: View {
             SavePopupSheet(currentImage: currentImage, stamp: $defaultStamp, showSavePopup: $showSavePopup, album: album)
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showMemoryPicker) {
+            PhotoPickerSheet(memories: memories, album: album)
+                .padding()
+                .presentationDragIndicator(.visible)
+            
+        }
     }
-    
-//    func addPhoto(image: UIImage) {
-//        let newMemory = Memory(image: UIImage, title: String, note: <#T##String#>, date: <#T##Date#>)
-//        
-//        let newPhoto = Photo(position: CGPoint(x: 200, y: 350), memory: <#T##Memory#>, album: <#T##[Album]#>)
-//        
-//        let newStamp = StampModel(
-//            position: CGPoint(x: 200, y: 350),
-//            image: image,
-//            source: nil,
-//            stamp: .stampVertical
-//        )
-//        
-//        withAnimation(.spring()) {
-//            stamps.append(newStamp)
-//        }
-//    }
-    
 }
 

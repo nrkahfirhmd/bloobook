@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct DraggableStamp: View {
+struct DraggablePhoto: View {
     var photo: Photo
     
     @State private var lastPosition: CGPoint = .zero
@@ -15,16 +15,24 @@ struct DraggableStamp: View {
     @State private var lastRotation: Double = 0
     
     var body: some View {
-        PhotoStamp(photo: photo)
-            .position(photo.position)
-            .scaleEffect(photo.scale)
-            .rotationEffect(photo.rotationAngle)
-            .onAppear {
-                lastPosition = photo.position
-                lastScale = photo.scale
-                lastRotation = photo.rotation
+        Group
+        {
+            if let uiImage = UIImage(data: photo.memory.imageData) {
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 150)
             }
-            .gesture(combinedGesture)
+        }
+        .position(photo.position)
+        .scaleEffect(photo.scale)
+        .rotationEffect(photo.rotationAngle)
+        .onAppear {
+            lastPosition = photo.position
+            lastScale = photo.scale
+            lastRotation = photo.rotation
+        }
+        .gesture(combinedGesture)
     }
     
     var combinedGesture: some Gesture {
@@ -44,19 +52,18 @@ struct DraggableStamp: View {
                 if let dragValue {
                     let t = dragValue.translation
                     let angle = photo.rotationAngle.radians
-
                     let adjustedX = t.width * cos(angle) + t.height * sin(angle)
                     let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    let damping = 1 / sqrt(photo.scale)
+                    let safeScale = max(photo.scale, 0.5)
+                    let damping = 1 / sqrt(safeScale)
 
                     photo.posX = lastPosition.x + adjustedX * damping
-                    photo.posY = lastPosition.y + adjustedY * damping
-                    
+                    photo.posY = lastPosition.y + adjustedY * damping          
                 }
                 
                 if let scaleValue {
                     let newScale = lastScale * scaleValue
-
+                    
                     photo.scale = min(max(newScale, 0.5), 3.0)
                 }
                 
