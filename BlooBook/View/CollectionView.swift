@@ -12,6 +12,7 @@ struct CollectionView: View {
     @Query var collections: [Collection]
     @Query var memories: [Memory]
     @Query var albums: [Album]
+    @Query var photos: [Photo]
     
     @State private var showAddCollectionSheet = false
     @State private var showAddBookSheet = false
@@ -47,6 +48,7 @@ struct CollectionView: View {
                         .padding(.horizontal, -20)
                     }
                     .padding(.bottom, 12)
+                    
                     
                     VStack(alignment: .leading) {
                         NavigationLink {

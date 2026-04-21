@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AlbumCard: View {
-    let album: Album
+    var album: Album
     var isSelectable: Bool = false
     
     var body: some View {
