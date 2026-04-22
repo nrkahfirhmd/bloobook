@@ -8,12 +8,19 @@
 import SwiftUI
 import SwiftData
 
+enum SaveMode {
+    case create
+    case edit
+}
+
 struct SavePopupSheet: View {
     @Environment(\.modelContext) private var context
     
     var currentImage: UIImage?
     @Binding var stamp: String
     @Binding var showSavePopup: Bool
+    var mode: SaveMode = .create
+    var existingMemory: Memory? = nil
     var album: Album?
     
     @State private var scale: CGFloat = 1
@@ -43,85 +50,47 @@ struct SavePopupSheet: View {
                     .padding(.top)
                 
                 VStack {
-                    if let image = currentImage {
-                        ZStack {
-                            Image(uiImage: image)
-                                .resizable()
-                                .scaledToFill()
-                                .scaleEffect(scale)
-                                .offset(offset)
-                                .simultaneousGesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            let newOffset = CGSize(
-                                                width: lastOffset.width + value.translation.width,
-                                                height: lastOffset.height + value.translation.height
-                                            )
-                                            offset = clampOffset(newOffset, scale: scale)
-                                        }
-                                        .onEnded{ _ in lastOffset = offset }
-                                )
-                                .simultaneousGesture(
-                                    MagnificationGesture()
-                                        .onChanged { value in
-                                            let newScale = lastScale * value
-                                            scale = clampScale(newScale)
-                                            
-                                            offset = clampOffset(offset, scale: scale)
-                                        }
-                                        .onEnded { _ in
-                                            lastScale = scale
-                                            lastOffset = offset
-                                        }
-                                )
+                    if mode == .create {
+                        if let image = currentImage {
+                            imageView(image)
                         }
-                        .frame(width: 500, height: 500)
-                        .clipped()
-                        .mask {
-                            Image(stamp)
-                                .resizable()
-                                .scaledToFit()
-                                .scaleEffect(0.55)
+                    } else {
+                        if let data = existingMemory?.imageData,
+                           let image = UIImage(data: data) {
+                            imageView(image)
                         }
-                        .onAppear {
-                            maskBounds = calculateMaskBounds()
-                        }
-                        .onChange(of: stamp) { _, _ in
-                            maskBounds = calculateMaskBounds()
-                        }
-                        .frame(
-                            width: maskBounds.width,
-                            height: maskBounds.height
-                        )
-                        .clipped()
                     }
                     
+                    mode == .create ?
                     Text("Adjust the image as you like")
                         .font(.caption2)
                         .italic()
                         .foregroundStyle(.tertiary)
+                    : nil
                 }
                 
-                HStack(spacing: 40) {
-                    ForEach(frames, id: \.self) { frame in
-                        HStack {
-                            Image(frame)
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 50)
-                                .onTapGesture {
-                                    selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
-                                }
-                                .padding()
+                if mode == .create {
+                    HStack(spacing: 40) {
+                        ForEach(frames, id: \.self) { frame in
+                            HStack {
+                                Image(frame)
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 50)
+                                    .onTapGesture {
+                                        selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
+                                    }
+                                    .padding()
+                            }
                         }
                     }
-                }
-                .frame(height: 100)
-                .frame(maxWidth: .infinity)
-                .ignoresSafeArea()
-                .background(Color.gray.opacity(0.5))
-                .onChange(of: selectedFrameIndex) { _, newValue in
-                    stamp = stamps[newValue]
+                    .frame(height: 100)
+                    .frame(maxWidth: .infinity)
+                    .ignoresSafeArea()
+                    .background(Color.gray.opacity(0.5))
+                    .onChange(of: selectedFrameIndex) { _, newValue in
+                        stamp = stamps[newValue]
+                    }
                 }
                 
                 VStack {
@@ -161,38 +130,16 @@ struct SavePopupSheet: View {
                     }
                     
                     Button(action: {
-                        if let image = currentImage {
-                            if let mask = UIImage(named: stamp) {
-                                let final = renderFinalImage(
-                                    photo: image,
-                                    maskImage: mask,
-                                    scale: scale,
-                                    offset: offset,
-                                    canvasSize: CGSize(width: 500, height: 500)
-                                )
-                                savedImage = final
-                                
-                                let memory = Memory(image: final, title: titleText, note: noteText, date: Date())
-                                
-                                context.insert(memory)
-                                
-                                let photo = Photo(position: CGPoint(x: 200, y: 350), scale: 1, rotation: Angle(degrees: 0), memory: memory, albums: album != nil ? [album!] : [])
-                                
-                                withAnimation(.spring()) {
-                                    context.insert(photo)
-                                    
-                                    if let album = album {
-                                        album.photos.append(photo)
-                                    }
-                                }
-                            }
+                        if mode == .create {
+                            createMemory()
+                        } else {
+                            updateMemory()
                         }
-                        showSavePopup = false
                     }) {
                         HStack {
                             Image(systemName: "photo.artframe")
                             
-                            Text("Save")
+                            Text(mode == .create ? "Save" : "Update")
                         }
                         .font(.headline)
                         .foregroundColor(.white)
@@ -210,6 +157,123 @@ struct SavePopupSheet: View {
                 }
                 .padding(.horizontal)
             }
+            .onAppear() {
+                loadExistingMemory()
+            }
+            .onChange(of: existingMemory) { _, _ in
+                loadExistingMemory()
+            }
+        }
+    }
+    
+    func createMemory() {
+        if let image = currentImage {
+            if let mask = UIImage(named: stamp) {
+                let final = renderFinalImage(
+                    photo: image,
+                    maskImage: mask,
+                    scale: scale,
+                    offset: offset,
+                    canvasSize: CGSize(width: 500, height: 500)
+                )
+                savedImage = final
+                
+                let memory = Memory(image: final, title: titleText, note: noteText, date: Date(), stamp: stamp)
+                
+                context.insert(memory)
+                
+                let photo = Photo(position: CGPoint(x: 200, y: 350), scale: 1, rotation: Angle(degrees: 0), memory: memory, albums: album != nil ? [album!] : [])
+                
+                withAnimation(.spring()) {
+                    context.insert(photo)
+                    
+                    if let album = album {
+                        album.photos.append(photo)
+                    }
+                }
+            }
+        }
+        showSavePopup = false
+    }
+    
+    @ViewBuilder
+    func imageView(_ image: UIImage) -> some View {
+        ZStack {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .scaleEffect(mode == .create ? scale : 1)
+                .offset(mode == .create ? offset : .zero)
+                .simultaneousGesture(
+                    mode == .create ?
+                    DragGesture()
+                        .onChanged { value in
+                            let newOffset = CGSize(
+                                width: lastOffset.width + value.translation.width,
+                                height: lastOffset.height + value.translation.height
+                            )
+                            offset = clampOffset(newOffset, scale: scale)
+                        }
+                        .onEnded { _ in lastOffset = offset }
+                    : nil
+                )
+                .simultaneousGesture(
+                    mode == .create ?
+                    MagnificationGesture()
+                        .onChanged { value in
+                            let newScale = lastScale * value
+                            scale = clampScale(newScale)
+                            offset = clampOffset(offset, scale: scale)
+                        }
+                        .onEnded { _ in
+                            lastScale = scale
+                            lastOffset = offset
+                        }
+                    : nil
+                )
+        }
+        .if(mode == .create) { view in
+            view
+                .frame(width: 500, height: 500)
+                .clipped()
+                .mask {
+                Image(stamp)
+                    .resizable()
+                    .scaledToFit()
+                    .scaleEffect(0.55)
+            }
+        }
+        .onAppear {
+            maskBounds = calculateMaskBounds()
+        }
+        .onChange(of: stamp) { _, _ in
+            maskBounds = calculateMaskBounds()
+        }
+        .frame(
+            width: maskBounds.width,
+            height: maskBounds.height
+        )
+        .clipped()
+    }
+    
+    func updateMemory() {
+        guard let memory = existingMemory else { return }
+        
+        memory.title = titleText
+        memory.note = noteText
+        
+        showSavePopup = false
+    }
+    
+    func loadExistingMemory() {
+        guard mode == .edit, let memory = existingMemory else { return }
+            
+        titleText = memory.title
+        noteText = memory.note
+        stamp = memory.stamp
+        
+        if mode == .edit, let data = existingMemory?.imageData {
+            savedImage = UIImage(data: data)
         }
     }
     
@@ -283,7 +347,10 @@ struct SavePopupSheet: View {
         offset: CGSize,
         canvasSize: CGSize
     ) -> UIImage {
-        let renderer = UIGraphicsImageRenderer(size: canvasSize)
+        let format = UIGraphicsImageRendererFormat()
+        format.opaque = false
+        
+        let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
         
         var maskRect: CGRect = .zero
         
@@ -360,6 +427,17 @@ struct SavePopupSheet: View {
         }
         
         return UIImage(cgImage: cgImage, scale: scaleFactor, orientation: image.imageOrientation)
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
     }
 }
 
