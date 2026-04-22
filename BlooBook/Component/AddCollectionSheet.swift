@@ -15,6 +15,8 @@ struct AddCollectionSheet: View {
     @State private var showAlbumPicker = false
     @State private var selectedAlbums: Set<Album> = []
     @State private var name = ""
+    
+    
     var body: some View {
         NavigationStack {
             Form {

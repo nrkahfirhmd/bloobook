@@ -9,6 +9,8 @@ import SwiftUI
 import SwiftData
 
 struct CollectionView: View {
+    @Environment(\.modelContext) private var context
+    
     @Query var collections: [Collection]
     @Query var memories: [Memory]
     @Query var albums: [Album]
@@ -16,6 +18,10 @@ struct CollectionView: View {
     
     @State private var showAddCollectionSheet = false
     @State private var showAddBookSheet = false
+    @State private var showEditSheet = false
+    @State private var showDeleteConfirm = false
+    @State private var selectedAlbum: Album?
+    
     var body: some View {
         NavigationStack{
             ScrollView {
@@ -68,9 +74,30 @@ struct CollectionView: View {
                                     )
                                     .frame(width: 140)
                                     .scrollTargetLayout()
+                                    .contextMenu {
+                                        Button {
+                                            showEditSheet = true
+                                        } label: {
+                                            Label("Edit Album", systemImage: "pencil")
+                                        }
+                                        
+                                        Button(role: .destructive) {
+                                            selectedAlbum = album
+                                            showDeleteConfirm = true
+                                        } label: {
+                                            Label("Delete Album", systemImage: "trash")
+                                        }
+                                    }
                                 }
                             }
                             .padding(.horizontal, 20)
+                        }
+                        .confirmationDialog("Delete this album?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                            Button("Delete", role: .destructive) {
+                                if let album = selectedAlbum {
+                                    deleteAlbum(album)
+                                }
+                            }
                         }
                         .scrollTargetBehavior(.viewAligned)
                         .scrollIndicators(.hidden)
@@ -141,8 +168,19 @@ struct CollectionView: View {
                     AddAlbumSheet()
                         .presentationDetents([.large])
                 }
+                .sheet(isPresented: $showEditSheet) {
+                    AddCollectionSheet()
+                        .presentationDetents([.large])
+                }
             }
         }
+    }
+    
+    func deleteAlbum(_ album: Album) {
+        withAnimation {
+            context.delete(album)
+        }
+        selectedAlbum = nil
     }
 }
 
