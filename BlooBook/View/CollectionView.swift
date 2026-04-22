@@ -58,7 +58,7 @@ struct CollectionView: View {
                     
                     VStack(alignment: .leading) {
                         NavigationLink {
-                            CollectionDetailView(collection: "All Albums", albums: albums)
+                            CollectionDetailView(name: "All Albums", albums: albums)
                         } label: {
                             HStack{
                                 Text("All Albums").font(.headline)
@@ -109,7 +109,7 @@ struct CollectionView: View {
                         VStack(alignment: .leading) {
                             NavigationLink {
                                 CollectionDetailView(
-                                    collection: collection.name,
+                                    name: collection.name, collection: collection,
                                     albums: collection.albums
                                 )
                             } label: {
