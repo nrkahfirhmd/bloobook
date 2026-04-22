@@ -10,13 +10,18 @@ import SwiftData
 
 struct AlbumPickerSheet: View {
     @Environment(\.dismiss) var dismiss
-    let albums: [Album]
     
+    @Query var albums: [Album]
     @Binding var selectedAlbums: Set<Album>
+    
+    var actionTitle: String = "Done"
+    var onSave: ((Set<Album>) -> Void)?
+    
     var columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
     ]
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -24,17 +29,16 @@ struct AlbumPickerSheet: View {
                     ForEach(albums) { album in
                         selectableCard(album)
                             .frame(width: 140)
-                            .scrollTargetLayout()
                     }
                 }
                 .padding()
-                
             }
             .navigationTitle("Select Albums")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") {
+                    Button(actionTitle) {
+                        onSave?(selectedAlbums)
                         dismiss()
                     }
                 }
@@ -52,12 +56,10 @@ struct AlbumPickerSheet: View {
                     .font(.headline)
                     .foregroundColor(.blue)
                     .background {
-                        Circle()
-                            .fill(.primary)
+                        Circle().fill(.primary)
                     }
                     .overlay {
-                        Circle()
-                            .stroke(Color.white, lineWidth: 2)
+                        Circle().stroke(Color.white, lineWidth: 2)
                     }
                     .padding(12)
             }
@@ -74,8 +76,4 @@ struct AlbumPickerSheet: View {
             selectedAlbums.insert(album)
         }
     }
-}
-
-#Preview {
-    AlbumPickerSheet(albums: [], selectedAlbums: .constant([]))
 }

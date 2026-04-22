@@ -11,10 +11,10 @@ import SwiftData
 struct AddCollectionSheet: View {
     @Environment(\.dismiss) var dismiss
     @Environment(\.modelContext) private var context
-    @Query private var albums: [Album]
     @State private var showAlbumPicker = false
     @State private var selectedAlbums: Set<Album> = []
     @State private var name = ""
+    @State private var isDirectlyAdd: Bool = false
     var body: some View {
         NavigationStack {
             Form {
@@ -74,7 +74,6 @@ struct AddCollectionSheet: View {
             }
             .sheet(isPresented: $showAlbumPicker) {
                 AlbumPickerSheet(
-                    albums: albums,
                     selectedAlbums: $selectedAlbums
                 )
             }
