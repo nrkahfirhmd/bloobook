@@ -11,7 +11,9 @@ import SwiftData
 
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
-    
+    @State private var draggingPhoto: Photo? = nil
+    @State private var isDragging = false
+    @State private var isOverTrash = false
     @State private var showBackgroundPicker = false
     @State private var background: ImageResource = .paper1
     @State private var selectedItem: PhotosPickerItem?
@@ -19,6 +21,7 @@ struct AlbumDetailView: View {
     @State private var showSavePopup: Bool = false
     @State private var defaultStamp: String = "stamp_1"
     @State private var showMemoryPicker: Bool = false
+    @State private var trashFrame: CGRect = .zero
     @Query var memories : [Memory]
     @Query var photos: [Photo]
     
@@ -44,16 +47,53 @@ struct AlbumDetailView: View {
                     .foregroundStyle(.gray)
             }
             
+            VStack {
+                Spacer()
+                
+                if isDragging {
+                    VStack{
+                        Text("Drag to delete")
+                            .font(.caption)
+                            .bold()
+                            .foregroundStyle(.background)
+                        Image(systemName: "trash.circle.fill")
+                            .font(.system(size: 60))
+                            .background(
+                                GeometryReader { geo in
+                                    Color.clear
+                                        .onAppear {
+                                            trashFrame = geo.frame(in: .global)
+                                        }
+                                        .onChange(of: geo.frame(in: .global)) { newValue in
+                                            trashFrame = newValue
+                                        }
+                                }
+                            )
+                        
+                    }
+                    .foregroundColor(isOverTrash ? .red : .gray)
+                    .scaleEffect(isOverTrash ? 1.2 : 1)
+                    .animation(.easeInOut, value: isOverTrash)
+                }
+            }
             ForEach(album.photos) { photo in
-                DraggablePhoto(photo: photo)
+                DraggablePhoto(
+                    photo: photo,
+                    draggingPhoto: $draggingPhoto,
+                    isDragging: $isDragging,
+                    isOverTrash: $isOverTrash,
+                    trashFrame: $trashFrame
+                )
+                .allowsHitTesting(!(isDragging && draggingPhoto?.id == photo.id))
+                .zIndex(draggingPhoto?.id == photo.id ? 100 : 0)
             }
         }
         .onChange(of: selectedItem) {
             Task {
                 if let data = try? await selectedItem?.loadTransferable(type: Data.self),
-                    let uiImage = UIImage(data: data) {
+                   let uiImage = UIImage(data: data) {
                     currentImage = uiImage
-
+                    
                     selectedItem = nil
                 } else {
                     await MainActor.run {
@@ -141,7 +181,6 @@ struct AlbumDetailView: View {
             PhotoPickerSheet(memories: memories, album: album)
                 .padding()
                 .presentationDragIndicator(.visible)
-            
         }
     }
 }
