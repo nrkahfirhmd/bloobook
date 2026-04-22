@@ -61,7 +61,7 @@ struct DraggablePhoto: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = photo.rotationAngle.radians
+                    let angle = lastRotation
                     
                     let adjustedX = t.width * cos(angle) + t.height * sin(angle)
                     let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
@@ -75,7 +75,7 @@ struct DraggablePhoto: View {
                     let expandedTrash = trashFrame.insetBy(dx: -20, dy: -150)
                     
                     let newIsOverTrash = expandedTrash.contains(touchPoint)
-
+                    
                     if newIsOverTrash != isOverTrash {
                         isOverTrash = newIsOverTrash
                         
@@ -88,11 +88,9 @@ struct DraggablePhoto: View {
                             trashScaleEffect = 1
                         }
                     }
-
-                    // 🔥 MAGNET HARUS DI SINI (jalan terus tiap frame)
+                    
                     if isOverTrash {
                         let lerp: CGFloat = 0.2
-                        
                         photo.posX += (trashFrame.midX - photo.posX - 100) * lerp
                         photo.posY += (trashFrame.midY - photo.posY - 100) * lerp
                     }

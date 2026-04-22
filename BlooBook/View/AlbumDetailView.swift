@@ -24,6 +24,7 @@ struct AlbumDetailView: View {
     @State private var trashFrame: CGRect = .zero
     @Query var memories : [Memory]
     @Query var photos: [Photo]
+    let screenSize = UIScreen.main.bounds.size
     
     init(album: Album) {
         self.album = album
@@ -40,6 +41,7 @@ struct AlbumDetailView: View {
             Image(background)
                 .resizable()
                 .scaledToFill()
+                .frame(width: screenSize.width, height: screenSize.height)
                 .ignoresSafeArea()
             
             if album.photos.isEmpty {
@@ -71,6 +73,7 @@ struct AlbumDetailView: View {
                             )
                         
                     }
+                    .padding(.bottom, 100)
                     .foregroundColor(isOverTrash ? .red : .gray)
                     .scaleEffect(isOverTrash ? 1.2 : 1)
                     .animation(.easeInOut, value: isOverTrash)
@@ -163,7 +166,12 @@ struct AlbumDetailView: View {
             
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    
+                    Task {
+                        if let image = await RenderAlbum() {
+                            shareImage(image)
+                        }
+                        debugPrint(album.photos.last?.position)
+                    }
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
@@ -182,6 +190,69 @@ struct AlbumDetailView: View {
                 .padding()
                 .presentationDragIndicator(.visible)
         }
+    }
+    @MainActor
+    func RenderAlbum() -> UIImage? {
+        
+        let view = albumContentView
+            .frame(width: screenSize.width, height: screenSize.height)
+        
+        let renderer = ImageRenderer(content: view)
+        renderer.scale = UIScreen.main.scale
+        
+        return renderer.uiImage
+    }
+    var albumContentView: some View {
+        ZStack {
+            Image(background)
+                .resizable()
+                .scaledToFill()
+                .frame(width: screenSize.width, height: screenSize.height)
+                .ignoresSafeArea()
+            
+            if album.photos.isEmpty {
+                Text("Tap + to add stamp")
+                    .foregroundStyle(.gray)
+            }
+            
+            VStack {
+                Spacer()
+                
+                if isDragging {
+                    VStack{
+                        Text("Drag to delete")
+                            .font(.caption)
+                            .bold()
+                            .foregroundStyle(.background)
+                        Image(systemName: "trash.circle.fill")
+                            .font(.system(size: 60))
+                    }
+                    .foregroundColor(isOverTrash ? .red : .gray)
+                    .scaleEffect(isOverTrash ? 1.2 : 1)
+                }
+            }
+            
+            ForEach(album.photos) { photo in
+                DraggablePhoto(
+                    photo: photo,
+                    draggingPhoto: .constant(nil),
+                    isDragging: .constant(false),
+                    isOverTrash: .constant(false),
+                    trashFrame: .constant(.zero)
+                )
+            }
+        }
+    }
+    func shareImage(_ image: UIImage) {
+        let activityVC = UIActivityViewController(activityItems: [image], applicationActivities: nil)
+        
+        if let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+           let root = scene.windows.first?.rootViewController {
+            root.present(activityVC, animated: true)
+        }
+    }
+    func saveToPhotos(_ image: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
 }
 

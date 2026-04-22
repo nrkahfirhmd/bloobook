@@ -9,12 +9,13 @@ import SwiftUI
 import SwiftData
 
 struct CollectionDetailView: View {
-    var collection: String
+    var name: String
+    var collection: Collection?
     var albums: [Album]
     @Query private var newAlbums: [Album]
     @State private var showAlbumPicker = false
     @State private var selectedAlbums: Set<Album> = []
-    
+    @State private var isDirectlyAdd: Bool = true
     var columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
@@ -34,7 +35,7 @@ struct CollectionDetailView: View {
                     }
                 }
                 .padding()
-                .navigationTitle(collection)
+                .navigationTitle(name)
                 .navigationBarTitleDisplayMode(.inline)
             }
             .scrollIndicators(.hidden)
@@ -50,9 +51,15 @@ struct CollectionDetailView: View {
                 }
             }
             .sheet(isPresented: $showAlbumPicker) {
-                AlbumPickerSheet(albums: newAlbums, selectedAlbums: $selectedAlbums)
-                    .presentationDetents([.large])
+                AlbumPickerSheet(
+                    selectedAlbums: $selectedAlbums,
+                    actionTitle: "Save"
+                ) { selected in
+                    collection?.albums.append(contentsOf: selected)
+                }
+                .presentationDetents([.large])
             }
         }
     }
+    
 }
