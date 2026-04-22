@@ -27,7 +27,9 @@ class CameraManager: NSObject, ObservableObject {
     private func configureSession() {
         session.beginConfiguration()
         
-        session.inputs.forEach { session.removeInput($0) }
+        if let currentInput = self.session.inputs.first as? AVCaptureDeviceInput {
+            self.session.removeInput(currentInput)
+        }
         
         guard let device = getCamera(),
               let input = try? AVCaptureDeviceInput(device: device),
@@ -56,21 +58,29 @@ class CameraManager: NSObject, ObservableObject {
         sessionQueue.async {
             self.session.beginConfiguration()
             
-            self.session.inputs.forEach { self.session.removeInput($0) }
+            if let currentInput = self.session.inputs.first as? AVCaptureDeviceInput {
+                self.session.removeInput(currentInput)
+            }
             
             if let device = self.getCamera(),
                let input = try? AVCaptureDeviceInput(device: device),
                self.session.canAddInput(input) {
                 self.session.addInput(input)
             }
+
+            self.session.commitConfiguration()
         }
-        
-        session.commitConfiguration()
     }
     
     func capturePhoto() {
         let settings = AVCapturePhotoSettings()
         settings.flashMode = .off
+        
+        if let connection = output.connection(with: .video) {
+            connection.videoRotationAngle = 90
+            
+            connection.isVideoMirrored = isFrontCamera
+        }
         
         output.capturePhoto(with: settings, delegate: self)
     }
