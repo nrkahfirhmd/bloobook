@@ -67,10 +67,6 @@ struct AddCollectionSheet: View {
                     .buttonStyle(.glassProminent)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
-                ToolbarItem {
-                    
-                    
-                }
             }
             .sheet(isPresented: $showAlbumPicker) {
                 AlbumPickerSheet(

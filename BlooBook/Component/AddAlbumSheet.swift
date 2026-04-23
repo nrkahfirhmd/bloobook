@@ -16,13 +16,16 @@ struct AddAlbumSheet: View {
     @State private var selectedItem: PhotosPickerItem?
     @State private var imageData: Data?
     @State private var selectedColor: Color = .blue
+    
+    var existingAlbum: Album? = nil
+    var mode: SaveMode = .create
+    
     var body: some View {
         NavigationStack {
             
             Form {
                 Section {
                     VStack(alignment: .center) {
-                        
                         ZStack {
                             if let imageData,
                                let uiImage = UIImage(data: imageData) {
@@ -84,11 +87,11 @@ struct AddAlbumSheet: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button {
-                        saveAlbum()
+                        mode == .create ? saveAlbum() : updateAlbum()
+
                         dismiss()
                     } label: {
-                        Text("Create")
-                        
+                        Text(mode == .create ? "Create" : "Edit")
                     }
                     .buttonStyle(.glassProminent)
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
@@ -96,12 +99,38 @@ struct AddAlbumSheet: View {
             }
             .navigationTitle("New Book")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear() {
+                loadExistingAlbum()
+            }
+            .onChange(of: existingAlbum) { _, _ in
+                loadExistingAlbum()
+            }
         }
+    }
+    
+    func loadExistingAlbum() {
+        guard mode == .edit, let album = existingAlbum else { return }
+            
+        name = album.name
+        imageData = album.imageData
+        selectedColor = album.color
     }
     
     func saveAlbum() {
         let album = Album(colorData: selectedColor.toData()!, imageData: imageData!, name: name, date: Date.now, photos: [])
         context.insert(album)
+    }
+    
+    func updateAlbum() {
+        guard let album = existingAlbum else { return }
+        
+        album.name = name
+        if let image = imageData {
+            album.imageData = image
+        }
+        album.colorData = selectedColor.toData()!
+        
+        dismiss()
     }
 }
 
