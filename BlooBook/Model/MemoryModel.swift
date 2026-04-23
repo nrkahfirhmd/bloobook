@@ -18,6 +18,9 @@ class Memory {
     var date: Date
     var stamp: String = "stamp_1"
     
+    @Relationship(deleteRule: .cascade)
+    var photo: Photo?
+    
     init(image: UIImage, title: String, note: String, date: Date, stamp: String) {
         self.id = UUID()
         if let pngData = image.pngData() {

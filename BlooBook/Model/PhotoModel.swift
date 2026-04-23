@@ -30,6 +30,7 @@ class Photo {
         self.rotation = rotation.radians
         self.memory = memory
         self.albums = albums
+        memory.photo = self
     }
     
     var position: CGPoint {
