@@ -145,6 +145,16 @@ struct AlbumDetailView: View {
                             Text("Vintage")
                         }
                     }
+                    Button {
+                        background = .paper3
+                    } label: {
+                        HStack {
+                            Image(.paper3)
+                                .resizable()
+                                .frame(width: 30, height: 40)
+                            Text("Dark")
+                        }
+                    }
                     
                 } label: {
                     Image(systemName: "paintpalette.fill")
@@ -178,6 +188,11 @@ struct AlbumDetailView: View {
             }
         }
         .toolbar(.hidden, for: .tabBar)
+        .toolbarColorScheme(
+            background == .paper3 ? .dark : .light,
+            for: .navigationBar
+        )
+        .tint(background == .paper3 ? .white : .black)
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

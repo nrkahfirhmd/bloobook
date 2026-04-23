@@ -45,6 +45,9 @@ struct CollectionView: View {
                                             .resizable()
                                             .scaledToFit()
                                             .frame(height: 150)
+                                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                                            .padding(.bottom, 12)
+                                            .padding(.top, 4)
                                     }
                                 }
                             }

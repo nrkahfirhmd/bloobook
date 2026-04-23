@@ -20,8 +20,8 @@ struct CameraView: View {
     @State private var noteText = ""
     @State private var savedImage: UIImage?
     
-    let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3"]
-    let stamps = ["stamp_1", "stamp_2", "stamp_3"]
+    let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3", "polaroid_frame_1", "polaroid_frame_2", "polaroid_frame_3"]
+    let stamps = ["stamp_1", "stamp_2", "stamp_3", "polaroid_frame_1", "polaroid_frame_2", "polaroid_frame_3"]
     @State private var selectedFrameIndex: Int = 0
     
     @State private var scale: CGFloat = 1.0
@@ -56,22 +56,24 @@ struct CameraView: View {
                     Spacer()
                     
                     if showFrameSelection {
-                        HStack(spacing: 40) {
-                            ForEach(frames, id: \.self) { frame in
-                                HStack {
-                                    Image(frame)
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 50)
-                                        .onTapGesture {
-                                            selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
-                                        }
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 40) {
+                                ForEach(frames, id: \.self) { frame in
+                                    HStack {
+                                        Image(frame)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 50)
+                                            .onTapGesture {
+                                                selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
+                                            }
+                                    }
                                 }
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.white.opacity(0.1))
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(Color.white.opacity(0.1))
                     }
                     
                     HStack {
