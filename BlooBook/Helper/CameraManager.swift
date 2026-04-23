@@ -77,9 +77,7 @@ class CameraManager: NSObject, ObservableObject {
         settings.flashMode = .off
         
         if let connection = output.connection(with: .video) {
-            connection.videoRotationAngle = 90
-            
-            connection.isVideoMirrored = isFrontCamera
+            connection.isVideoMirrored = false
         }
         
         output.capturePhoto(with: settings, delegate: self)
