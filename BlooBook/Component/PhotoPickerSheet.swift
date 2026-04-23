@@ -49,6 +49,7 @@ struct PhotoPickerSheet: View {
                     .scaledToFit()
                     .frame(height: 150)
                     .opacity(selectedMemories.contains(memory) ? 0.7 : 1)
+                    .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
             }
             
             if selectedMemories.contains(memory) {

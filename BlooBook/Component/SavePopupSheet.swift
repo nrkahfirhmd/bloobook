@@ -38,132 +38,136 @@ struct SavePopupSheet: View {
     private let minScale: CGFloat = 0.5
     private let maxScale: CGFloat = 3
     
-    private let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3"]
-    private let stamps = ["stamp_1", "stamp_2", "stamp_3"]
+    let frames = ["stamp_frame_1", "stamp_frame_2", "stamp_frame_3", "polaroid_frame_1", "polaroid_frame_2", "polaroid_frame_3"]
+    let stamps = ["stamp_1", "stamp_2", "stamp_3", "polaroid_frame_1", "polaroid_frame_2", "polaroid_frame_3"]
     
     var body: some View {
-        ScrollView {
-            VStack(spacing: 20) {
-                Text("Save Memory")
-                    .font(.title)
-                    .bold()
-                    .padding(.top)
-                
-                VStack {
-                    if mode == .create {
-                        if let image = currentImage {
-                            imageView(image)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack {
+                        if mode == .create {
+                            if let image = currentImage {
+                                imageView(image)
+                            }
+                        } else {
+                            if let data = existingMemory?.imageData,
+                               let image = UIImage(data: data) {
+                                imageView(image)
+                            }
                         }
-                    } else {
-                        if let data = existingMemory?.imageData,
-                           let image = UIImage(data: data) {
-                            imageView(image)
-                        }
+                        
+                        mode == .create ?
+                        Text("Adjust the image as you like")
+                            .font(.caption2)
+                            .italic()
+                            .foregroundStyle(.tertiary)
+                        : nil
                     }
+                    .padding(.top, 48)
+                    .padding(.bottom, 24)
                     
-                    mode == .create ?
-                    Text("Adjust the image as you like")
-                        .font(.caption2)
-                        .italic()
-                        .foregroundStyle(.tertiary)
-                    : nil
-                }
-                
-                if mode == .create {
-                    HStack(spacing: 40) {
-                        ForEach(frames, id: \.self) { frame in
-                            HStack {
-                                Image(frame)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 50)
-                                    .onTapGesture {
-                                        selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
+                    if mode == .create {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(frames, id: \.self) { frame in
+                                    HStack {
+                                        Image(frame)
+                                            .resizable()
+                                            .scaledToFit()
+                                            .frame(width: 50)
+                                            .onTapGesture {
+                                                selectedFrameIndex = frames.firstIndex(of: frame) ?? 0
+                                            }
+                                            .padding()
                                     }
-                                    .padding()
+                                }
+                            }
+                            .frame(height: 100)
+                            .frame(maxWidth: .infinity)
+                            .ignoresSafeArea()
+                            .background(Color.gray.opacity(0.5))
+                            .onChange(of: selectedFrameIndex) { _, newValue in
+                                stamp = stamps[newValue]
                             }
                         }
                     }
-                    .frame(height: 100)
-                    .frame(maxWidth: .infinity)
-                    .ignoresSafeArea()
-                    .background(Color.gray.opacity(0.5))
-                    .onChange(of: selectedFrameIndex) { _, newValue in
-                        stamp = stamps[newValue]
-                    }
-                }
-                
-                VStack {
-                    VStack(alignment: .leading) {
-                        HStack(spacing: 2) {
-                            Text("Title")
+                    
+                    VStack {
+                        VStack(alignment: .leading) {
+                            HStack(spacing: 2) {
+                                Text("Title")
+                                    .font(.title3)
+                                    .fontWeight(.medium)
+                                
+                                Text("*")
+                                    .foregroundStyle(Color.red)
+                            }
+                            
+                            TextField("Meow", text: $titleText)
+                                .padding(16)
+                                .background(.regularMaterial)
+                                .cornerRadius(20)
+                        }
+                        
+                        VStack(alignment: .leading) {
+                            Text("Note (max. 30 words)")
                                 .font(.title3)
                                 .fontWeight(.medium)
                             
-                            Text("*")
-                                .foregroundStyle(Color.red)
-                        }
-                        
-                        TextField("Meow", text: $titleText)
-                            .padding(16)
-                            .background(.regularMaterial)
-                            .cornerRadius(20)
-                    }
-                    
-                    VStack(alignment: .leading) {
-                        Text("Note (max. 30 words)")
-                            .font(.title3)
-                            .fontWeight(.medium)
-                        
-                        TextField("Meow is cat sound", text: $noteText, axis: .vertical)
-                            .padding(16)
-                            .background(.regularMaterial)
-                            .cornerRadius(20)
-                            .lineLimit(1...3)
-                            .onChange(of: noteText) { _, newValue in
-                                let words = newValue.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
-                                
-                                if words.count > 30 {
-                                    noteText = words.prefix(30).joined(separator: " ")
+                            TextField("Meow is cat sound", text: $noteText, axis: .vertical)
+                                .padding(16)
+                                .background(.regularMaterial)
+                                .cornerRadius(20)
+                                .lineLimit(1...3)
+                                .onChange(of: noteText) { _, newValue in
+                                    let words = newValue.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }
+                                    
+                                    if words.count > 30 {
+                                        noteText = words.prefix(30).joined(separator: " ")
+                                    }
                                 }
+                        }
+                        
+                        Button(action: {
+                            if mode == .create {
+                                createMemory()
+                            } else {
+                                updateMemory()
                             }
-                    }
-                    
-                    Button(action: {
-                        if mode == .create {
-                            createMemory()
-                        } else {
-                            updateMemory()
+                        }) {
+                            HStack {
+                                Image(systemName: "photo.artframe")
+                                
+                                Text(mode == .create ? "Save" : "Update")
+                            }
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.blue)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                         }
-                    }) {
-                        HStack {
-                            Image(systemName: "photo.artframe")
-                            
-                            Text(mode == .create ? "Save" : "Update")
+                        .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .padding(.top)
+                        
+                        Button("Cancel") {
+                            showSavePopup = false
                         }
-                        .font(.headline)
-                        .foregroundColor(.white)
-                        .padding()
-                        .background(Color.blue)
-                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                        .padding(.vertical)
                     }
-                    .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .padding(.top)
-                    
-                    Button("Cancel") {
-                        showSavePopup = false
-                    }
-                    .padding(.vertical)
+                    .padding(.horizontal)
                 }
-                .padding(.horizontal)
+                .onAppear() {
+                    loadExistingMemory()
+                }
+                .onChange(of: existingMemory) { _, _ in
+                    loadExistingMemory()
+                }
             }
-            .onAppear() {
-                loadExistingMemory()
-            }
-            .onChange(of: existingMemory) { _, _ in
-                loadExistingMemory()
-            }
+            .navigationTitle("Save Memory")
+            .navigationBarTitleDisplayMode(.inline)
         }
+        
     }
     
     func createMemory() {
@@ -196,64 +200,94 @@ struct SavePopupSheet: View {
         showSavePopup = false
     }
     
+    func isPolaroid(stamp: String) -> Bool {
+        return stamp.contains("polaroid")
+    }
+    
     @ViewBuilder
     func imageView(_ image: UIImage) -> some View {
-        ZStack {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
-                .scaleEffect(mode == .create ? scale : 1)
-                .offset(mode == .create ? offset : .zero)
-                .simultaneousGesture(
-                    mode == .create ?
-                    DragGesture()
-                        .onChanged { value in
-                            let newOffset = CGSize(
-                                width: lastOffset.width + value.translation.width,
-                                height: lastOffset.height + value.translation.height
-                            )
-                            offset = clampOffset(newOffset, scale: scale)
+        Group {
+            if isPolaroid(stamp: stamp), let config = polaroidConfig(for: stamp) {
+                ZStack(alignment: .center) {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(
+                            width:  config.photoRect.width  * (mode == .create ? scale : 1),
+                            height: config.photoRect.height * (mode == .create ? scale : 1)
+                        )
+                        .offset(mode == .create ? offset : .zero)
+                        .frame(width: config.photoRect.width, height: config.photoRect.height, alignment: .center)
+                        .clipped()
+                        .simultaneousGesture(mode == .create ? dragGesture() : nil)
+                        .simultaneousGesture(mode == .create ? magnifyGesture() : nil)
+                        .padding(EdgeInsets(
+                            top:      config.photoRect.origin.y,
+                            leading:  config.photoRect.origin.x,
+                            bottom:   config.frameSize.height - config.photoRect.maxY,
+                            trailing: config.frameSize.width  - config.photoRect.maxX
+                        ))
+
+                    Image(stamp)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: config.frameSize.width, height: config.frameSize.height)
+                        .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+                        .allowsHitTesting(false)
+                }
+                .frame(width: config.photoRect.width, height: config.photoRect.height)
+            } else {
+                ZStack {
+                    Image(uiImage: image)
+                        .resizable()
+                        .scaledToFill()
+                        .scaleEffect(mode == .create ? scale : 1)
+                        .offset(mode == .create ? offset : .zero)
+                        .simultaneousGesture(mode == .create ? dragGesture() : nil)
+                        .simultaneousGesture(mode == .create ? magnifyGesture() : nil)
+                }
+                .if(mode == .create) { view in
+                    view
+                        .frame(width: 500, height: 500)
+                        .clipped()
+                        .mask {
+                            Image(stamp)
+                                .resizable()
+                                .scaledToFit()
+                                .scaleEffect(0.55)
                         }
-                        .onEnded { _ in lastOffset = offset }
-                    : nil
-                )
-                .simultaneousGesture(
-                    mode == .create ?
-                    MagnificationGesture()
-                        .onChanged { value in
-                            let newScale = lastScale * value
-                            scale = clampScale(newScale)
-                            offset = clampOffset(offset, scale: scale)
-                        }
-                        .onEnded { _ in
-                            lastScale = scale
-                            lastOffset = offset
-                        }
-                    : nil
-                )
-        }
-        .if(mode == .create) { view in
-            view
-                .frame(width: 500, height: 500)
+                }
+                .frame(width: maskBounds.width, height: maskBounds.height)
                 .clipped()
-                .mask {
-                Image(stamp)
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(0.55)
             }
         }
-        .onAppear {
-            maskBounds = calculateMaskBounds()
-        }
-        .onChange(of: stamp) { _, _ in
-            maskBounds = calculateMaskBounds()
-        }
-        .frame(
-            width: maskBounds.width,
-            height: maskBounds.height
-        )
-        .clipped()
+        .onAppear { maskBounds = calculateMaskBounds() }
+        .onChange(of: stamp) { _, _ in maskBounds = calculateMaskBounds() }
+    }
+
+    private func dragGesture() -> some Gesture {
+        DragGesture()
+            .onChanged { value in
+                let newOffset = CGSize(
+                    width:  lastOffset.width  + value.translation.width,
+                    height: lastOffset.height + value.translation.height
+                )
+                offset = clampOffset(newOffset, scale: scale)
+            }
+            .onEnded { _ in lastOffset = offset }
+    }
+
+    private func magnifyGesture() -> some Gesture {
+        MagnificationGesture()
+            .onChanged { value in
+                let newScale = lastScale * value
+                scale  = clampScale(newScale)
+                offset = clampOffset(offset, scale: scale)
+            }
+            .onEnded { _ in
+                lastScale  = scale
+                lastOffset = offset
+            }
     }
     
     func updateMemory() {
@@ -267,7 +301,7 @@ struct SavePopupSheet: View {
     
     func loadExistingMemory() {
         guard mode == .edit, let memory = existingMemory else { return }
-            
+        
         titleText = memory.title
         noteText = memory.note
         stamp = memory.stamp
@@ -282,32 +316,59 @@ struct SavePopupSheet: View {
     }
     
     func clampOffset(_ proposedOffset: CGSize, scale: CGFloat) -> CGSize {
-        let maskBounds = calculateMaskBounds()
-        
-        let maskCenterX = maskBounds.midX
-        let maskCenterY = maskBounds.midY
-        
-        let canvasCenterX = canvasSize.width / 2
-        let canvasCenterY = canvasSize.height / 2
-        
-        let deltaX = maskCenterX - canvasCenterX
-        let deltaY = maskCenterY - canvasCenterY
-        
-        let adjustedOffset = CGSize(
-            width: proposedOffset.width + deltaX,
-            height: proposedOffset.height + deltaY
-        )
-        
-        let scaledImageWidth = canvasSize.width * scale
-        let scaledImageHeight = canvasSize.height * scale
-        
-        let horizontalLimit = max(0, (scaledImageWidth - maskBounds.width) / 2)
-        let verticalLimit = max(0, (scaledImageHeight - maskBounds.height) / 2)
-        
-        let clampedX = min(max(adjustedOffset.width, -horizontalLimit), horizontalLimit)
-        let clampedY = min(max(adjustedOffset.height, -verticalLimit), verticalLimit)
-        
-        return CGSize(width: clampedX - deltaX, height: clampedY - deltaY)
+        if isPolaroid(stamp: stamp), let config = polaroidConfig(for: stamp) {
+            let photoRect = config.photoRect
+
+            let photo: UIImage? = {
+                if mode == .create { return currentImage }
+                if let data = existingMemory?.imageData { return UIImage(data: data) }
+                return nil
+            }()
+
+            guard let photo else { return proposedOffset }
+
+            let aspectWidth  = photoRect.width  / photo.size.width
+            let aspectHeight = photoRect.height / photo.size.height
+            let baseFillScale = max(aspectWidth, aspectHeight)
+
+            let scaledWidth  = photo.size.width  * baseFillScale * scale
+            let scaledHeight = photo.size.height * baseFillScale * scale
+
+            let horizontalLimit = max(0, (scaledWidth  - photoRect.width)  / 2)
+            let verticalLimit   = max(0, (scaledHeight - photoRect.height) / 2)
+
+            return CGSize(
+                width:  min(max(proposedOffset.width,  -horizontalLimit), horizontalLimit),
+                height: min(max(proposedOffset.height, -verticalLimit),   verticalLimit)
+            )
+
+        } else {
+            let maskBounds = calculateMaskBounds()
+
+            let maskCenterX = maskBounds.midX
+            let maskCenterY = maskBounds.midY
+            let canvasCenterX = canvasSize.width  / 2
+            let canvasCenterY = canvasSize.height / 2
+
+            let deltaX = maskCenterX - canvasCenterX
+            let deltaY = maskCenterY - canvasCenterY
+
+            let adjustedOffset = CGSize(
+                width:  proposedOffset.width  + deltaX,
+                height: proposedOffset.height + deltaY
+            )
+
+            let scaledImageWidth  = canvasSize.width  * scale
+            let scaledImageHeight = canvasSize.height * scale
+
+            let horizontalLimit = max(0, (scaledImageWidth  - maskBounds.width)  / 2)
+            let verticalLimit   = max(0, (scaledImageHeight - maskBounds.height) / 2)
+
+            let clampedX = min(max(adjustedOffset.width,  -horizontalLimit), horizontalLimit)
+            let clampedY = min(max(adjustedOffset.height, -verticalLimit),   verticalLimit)
+
+            return CGSize(width: clampedX - deltaX, height: clampedY - deltaY)
+        }
     }
     
     func calculateMaskBounds() -> CGRect {
@@ -349,90 +410,137 @@ struct SavePopupSheet: View {
     ) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.opaque = false
-        
+
         let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
-        
+
+        if isPolaroid(stamp: stamp), let config = polaroidConfig(for: stamp) {
+            let image = renderer.image { context in
+                let cg = context.cgContext
+
+                let frameOriginX = (canvasSize.width  - config.frameSize.width)  / 2
+                let frameOriginY = (canvasSize.height - config.frameSize.height) / 2
+
+                let photoDestRect = CGRect(
+                    x: frameOriginX + config.photoRect.origin.x,
+                    y: frameOriginY + config.photoRect.origin.y,
+                    width: config.photoRect.width,
+                    height: config.photoRect.height
+                )
+
+                cg.saveGState()
+                cg.clip(to: photoDestRect)
+
+                let photoCenter = CGPoint(
+                    x: photoDestRect.midX + offset.width,
+                    y: photoDestRect.midY + offset.height
+                )
+
+                let aspectWidth  = photoDestRect.width  / photo.size.width
+                let aspectHeight = photoDestRect.height / photo.size.height
+                let fillScale    = max(aspectWidth, aspectHeight) * scale
+
+                let drawWidth  = photo.size.width  * fillScale
+                let drawHeight = photo.size.height * fillScale
+
+                let drawRect = CGRect(
+                    x: photoCenter.x - drawWidth  / 2,
+                    y: photoCenter.y - drawHeight / 2,
+                    width: drawWidth,
+                    height: drawHeight
+                )
+                photo.draw(in: drawRect)
+                cg.restoreGState()
+
+                let frameDestRect = CGRect(
+                    origin: CGPoint(x: frameOriginX, y: frameOriginY),
+                    size: config.frameSize
+                )
+                maskImage.draw(in: frameDestRect)
+            }
+
+            let scaleFactor = image.scale
+            let cropRect = CGRect(
+                x: ((canvasSize.width  - config.frameSize.width)  / 2) * scaleFactor,
+                y: ((canvasSize.height - config.frameSize.height) / 2) * scaleFactor,
+                width:  config.frameSize.width  * scaleFactor,
+                height: config.frameSize.height * scaleFactor
+            )
+            if let cropped = image.cgImage?.cropping(to: cropRect) {
+                return UIImage(cgImage: cropped, scale: scaleFactor, orientation: image.imageOrientation)
+            }
+            return image
+        }
+
         var maskRect: CGRect = .zero
-        
+
         let image = renderer.image { context in
             let cg = context.cgContext
-            
-            let maskAspect = maskImage.size.width / maskImage.size.height
+
+            let maskAspect  = maskImage.size.width / maskImage.size.height
             let canvasAspect = canvasSize.width / canvasSize.height
-            
-            var maskWidth: CGFloat
+
+            var maskWidth:  CGFloat
             var maskHeight: CGFloat
-            
+
             if maskAspect > canvasAspect {
-                maskWidth = canvasSize.width
+                maskWidth  = canvasSize.width
                 maskHeight = canvasSize.width / maskAspect
             } else {
                 maskHeight = canvasSize.height
-                maskWidth = canvasSize.height * maskAspect
+                maskWidth  = canvasSize.height * maskAspect
             }
-            
+
             let scaleEffect: CGFloat = 0.55
-            maskWidth *= scaleEffect
+            maskWidth  *= scaleEffect
             maskHeight *= scaleEffect
-            
+
             let maskOrigin = CGPoint(
-                x: (canvasSize.width - maskWidth) / 2,
+                x: (canvasSize.width  - maskWidth)  / 2,
                 y: (canvasSize.height - maskHeight) / 2
             )
-            
             maskRect = CGRect(origin: maskOrigin, size: CGSize(width: maskWidth, height: maskHeight))
-            
+
             if let maskCG = maskImage.cgImage {
                 cg.saveGState()
                 cg.clip(to: maskRect, mask: maskCG)
             }
-            
+
             cg.scaleBy(x: scale, y: scale)
-            
             cg.translateBy(
-                x: (canvasSize.width / 2 + offset.width) / scale,
+                x: (canvasSize.width  / 2 + offset.width)  / scale,
                 y: (canvasSize.height / 2 + offset.height) / scale
             )
-            
-            let aspectWidth = canvasSize.width / photo.size.width
+
+            let aspectWidth  = canvasSize.width  / photo.size.width
             let aspectHeight = canvasSize.height / photo.size.height
-            let fillScale = max(aspectWidth, aspectHeight)
-            
-            let drawWidth = photo.size.width * fillScale
+            let fillScale    = max(aspectWidth, aspectHeight)
+
+            let drawWidth  = photo.size.width  * fillScale
             let drawHeight = photo.size.height * fillScale
-            
-            let drawRect = CGRect(
-                x: -drawWidth / 2,
-                y: -drawHeight / 2,
-                width: drawWidth,
-                height: drawHeight
-            )
-            
-            photo.draw(in: drawRect)
-            
+
+            photo.draw(in: CGRect(x: -drawWidth / 2, y: -drawHeight / 2,
+                                  width: drawWidth, height: drawHeight))
             cg.restoreGState()
         }
-        
+
         let scaleFactor = image.scale
-        
         let scaledRect = CGRect(
             x: maskRect.origin.x * scaleFactor,
             y: maskRect.origin.y * scaleFactor,
-            width: maskRect.size.width * scaleFactor,
+            width:  maskRect.size.width  * scaleFactor,
             height: maskRect.size.height * scaleFactor
         )
-        
-        guard let cgImage = image.cgImage?.cropping(to: scaledRect) else {
-            return image
-        }
-        
+        guard let cgImage = image.cgImage?.cropping(to: scaledRect) else { return image }
         return UIImage(cgImage: cgImage, scale: scaleFactor, orientation: image.imageOrientation)
     }
 }
 
 extension View {
     @ViewBuilder
-    func `if`<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+    func `if`<Content: View>(
+        _ condition: Bool,
+        @ViewBuilder transform: (Self) -> Content
+    ) -> some View {
         if condition {
             transform(self)
         } else {
@@ -445,7 +553,7 @@ extension View {
     let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [])
     SavePopupSheet(
         currentImage: UIImage(named: "temp"),
-        stamp: .constant("stamp_1"),
+        stamp: .constant("polaroid_frame_1"),
         showSavePopup: .constant(true),
         album: mockAlbum
     )
