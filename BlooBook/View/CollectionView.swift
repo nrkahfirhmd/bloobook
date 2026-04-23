@@ -21,6 +21,7 @@ struct CollectionView: View {
     @State private var showEditSheet = false
     @State private var showDeleteConfirm = false
     @State private var selectedAlbum: Album?
+    @State private var deletedAlbum: Album?
     
     var body: some View {
         NavigationStack{
@@ -76,13 +77,14 @@ struct CollectionView: View {
                                     .scrollTargetLayout()
                                     .contextMenu {
                                         Button {
+                                            selectedAlbum = album
                                             showEditSheet = true
                                         } label: {
                                             Label("Edit Album", systemImage: "pencil")
                                         }
                                         
                                         Button(role: .destructive) {
-                                            selectedAlbum = album
+                                            deletedAlbum = album
                                             showDeleteConfirm = true
                                         } label: {
                                             Label("Delete Album", systemImage: "trash")
@@ -94,7 +96,7 @@ struct CollectionView: View {
                         }
                         .confirmationDialog("Delete this album?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
                             Button("Delete", role: .destructive) {
-                                if let album = selectedAlbum {
+                                if let album = deletedAlbum {
                                     deleteAlbum(album)
                                 }
                             }
@@ -168,8 +170,8 @@ struct CollectionView: View {
                     AddAlbumSheet()
                         .presentationDetents([.large])
                 }
-                .sheet(isPresented: $showEditSheet) {
-                    AddCollectionSheet()
+                .sheet(item: $selectedAlbum) { album in
+                    AddAlbumSheet(existingAlbum: album, mode: .edit)
                         .presentationDetents([.large])
                 }
             }
