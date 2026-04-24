@@ -240,6 +240,24 @@ struct AlbumDetailView: View {
                     trashFrame: .constant(.zero)
                 )
             }
+            ForEach(album.stickers) { sticker in
+                DraggableSticker(
+                    sticker: sticker,
+                    draggingSticker: .constant(nil),
+                    isDragging: .constant(false),
+                    isOverTrash: .constant(false),
+                    trashFrame: .constant(.zero)
+                )
+            }
+            ForEach(album.texts) { text in
+                DraggableText(
+                    textItem: text,
+                    draggingText: .constant(nil),
+                    isDragging: .constant(false),
+                    isOverTrash: .constant(false),
+                    trashFrame: .constant(.zero)
+                )
+            }
         }
     }
     
