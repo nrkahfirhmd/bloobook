@@ -14,7 +14,6 @@ struct StampOverlay: View {
         Image(selectedFrame)
             .resizable()
             .scaledToFit()
-            .scaleEffect(0.55)
     }
 }
 
