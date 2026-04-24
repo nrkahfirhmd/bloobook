@@ -22,42 +22,56 @@ struct CollectionDetailView: View {
     ]
     
     var body: some View {
-        
         NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 24){
-                    ForEach(albums) { album in
-                        AlbumCard(
-                            album: album
-                        )
-                        .frame(width: 140)
-                        .scrollTargetLayout()
+            if albums.isEmpty {
+                VStack(spacing: 12) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .font(.system(size: 40))
+                        .foregroundColor(.gray.opacity(0.6))
+                    
+                    Text("No album yet")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 150)
+                .padding(20)
+            } else {
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 24){
+                        ForEach(albums) { album in
+                            AlbumCard(
+                                album: album
+                            )
+                            .frame(width: 140)
+                            .scrollTargetLayout()
+                        }
+                    }
+                    .padding()
+                    .navigationTitle(name)
+                    .navigationBarTitleDisplayMode(.inline)
+                }
+                .scrollIndicators(.hidden)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        
+                        Button {
+                            showAlbumPicker = true
+                        } label: {
+                            Image(systemName: "plus")
+                        }
+                        
                     }
                 }
-                .padding()
-                .navigationTitle(name)
-                .navigationBarTitleDisplayMode(.inline)
-            }
-            .scrollIndicators(.hidden)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    
-                    Button {
-                        showAlbumPicker = true
-                    } label: {
-                        Image(systemName: "plus")
+                .sheet(isPresented: $showAlbumPicker) {
+                    AlbumPickerSheet(
+                        selectedAlbums: $selectedAlbums,
+                        actionTitle: "Save"
+                    ) { selected in
+                        collection?.albums.append(contentsOf: selected)
                     }
-                    
+                    .presentationDetents([.large])
                 }
-            }
-            .sheet(isPresented: $showAlbumPicker) {
-                AlbumPickerSheet(
-                    selectedAlbums: $selectedAlbums,
-                    actionTitle: "Save"
-                ) { selected in
-                    collection?.albums.append(contentsOf: selected)
-                }
-                .presentationDetents([.large])
             }
         }
     }

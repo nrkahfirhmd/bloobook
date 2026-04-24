@@ -22,6 +22,7 @@ struct CollectionView: View {
     @State private var showDeleteConfirm = false
     @State private var selectedAlbum: Album?
     @State private var deletedAlbum: Album?
+    @State private var selectedMemory: Memory?
     
     var body: some View {
         NavigationStack{
@@ -31,31 +32,55 @@ struct CollectionView: View {
                         NavigationLink {
                             ShowcaseView()
                         } label: {
-                            HStack{
-                                Text("All Stamps").font(.headline)
+                            HStack {
+                                Text("All Photos")
+                                    .font(.headline)
                                 Image(systemName: "chevron.right")
                             }
                             .foregroundColor(.primary)
                         }
-                        ScrollView(.horizontal) {
-                            HStack(spacing: 12) {
-                                ForEach(memories) { memory in
-                                    if let uiImage = UIImage(data: memory.imageData) {
-                                        Image(uiImage: uiImage)
-                                            .resizable()
-                                            .scaledToFit()
-                                            .frame(height: 150)
-                                            .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
-                                            .padding(.bottom, 12)
-                                            .padding(.top, 4)
+                        
+                        if memories.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "photo.on.rectangle.angled")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                
+                                Text("No photo yet")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 150)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.gray.opacity(0.08))
+                            )
+                            
+                        } else {
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 12) {
+                                    ForEach(memories) { memory in
+                                        if let uiImage = UIImage(data: memory.imageData) {
+                                            Image(uiImage: uiImage)
+                                                .resizable()
+                                                .scaledToFit()
+                                                .frame(height: 150)
+                                                .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                                                .padding(.bottom, 12)
+                                                .padding(.top, 4)
+                                                .onTapGesture {
+                                                    selectedMemory = memory
+                                                }
+                                        }
                                     }
                                 }
+                                .padding(.horizontal, 20)
                             }
-                            .padding(.horizontal, 20)
+                            .scrollTargetBehavior(.viewAligned)
+                            .scrollIndicators(.hidden)
+                            .padding(.horizontal, -20)
                         }
-                        .scrollTargetBehavior(.viewAligned)
-                        .scrollIndicators(.hidden)
-                        .padding(.horizontal, -20)
                     }
                     .padding(.bottom, 12)
                     
@@ -70,45 +95,65 @@ struct CollectionView: View {
                             }
                             .foregroundColor(.primary)
                         }
-                        ScrollView(.horizontal) {
-                            HStack(spacing: 12) {
-                                ForEach(albums) { album in
-                                    AlbumCard(
-                                        album: album
-                                    )
-                                    .frame(width: 140)
-                                    .scrollTargetLayout()
-                                    .contextMenu {
-                                        Button {
-                                            selectedAlbum = album
-                                            showEditSheet = true
-                                        } label: {
-                                            Label("Edit Album", systemImage: "pencil")
-                                        }
-                                        
-                                        Button(role: .destructive) {
-                                            deletedAlbum = album
-                                            showDeleteConfirm = true
-                                        } label: {
-                                            Label("Delete Album", systemImage: "trash")
+                        if albums.isEmpty {
+                            VStack(spacing: 12) {
+                                Image(systemName: "rectangle.stack")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.gray.opacity(0.6))
+                                
+                                Text("No album yet")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 150)
+                            .background(
+                                RoundedRectangle(cornerRadius: 16)
+                                    .fill(Color.gray.opacity(0.08))
+                            )
+                        } else {
+                            
+                            ScrollView(.horizontal) {
+                                HStack(spacing: 12) {
+                                    ForEach(albums) { album in
+                                        AlbumCard(
+                                            album: album
+                                        )
+                                        .frame(width: 140)
+                                        .scrollTargetLayout()
+                                        .contextMenu {
+                                            Button {
+                                                selectedAlbum = album
+                                                showEditSheet = true
+                                            } label: {
+                                                Label("Edit Album", systemImage: "pencil")
+                                            }
+                                            
+                                            Button(role: .destructive) {
+                                                deletedAlbum = album
+                                                showDeleteConfirm = true
+                                            } label: {
+                                                Label("Delete Album", systemImage: "trash")
+                                            }
                                         }
                                     }
                                 }
+                                .padding(.horizontal, 20)
                             }
-                            .padding(.horizontal, 20)
-                        }
-                        .confirmationDialog("Delete this album?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
-                            Button("Delete", role: .destructive) {
-                                if let album = deletedAlbum {
-                                    deleteAlbum(album)
+                            .confirmationDialog("Delete this album?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
+                                Button("Delete", role: .destructive) {
+                                    if let album = deletedAlbum {
+                                        deleteAlbum(album)
+                                    }
                                 }
                             }
+                            .scrollTargetBehavior(.viewAligned)
+                            .scrollIndicators(.hidden)
+                            .padding(.horizontal, -20)
                         }
-                        .scrollTargetBehavior(.viewAligned)
-                        .scrollIndicators(.hidden)
-                        .padding(.horizontal, -20)
                     }
                     .padding(.bottom, 12)
+                        
                     
                     ForEach(collections) { collection in
                         VStack(alignment: .leading) {
@@ -176,6 +221,11 @@ struct CollectionView: View {
                 .sheet(item: $selectedAlbum) { album in
                     AddAlbumSheet(existingAlbum: album, mode: .edit)
                         .presentationDetents([.large])
+                }
+                .sheet(item: $selectedMemory) { memory in
+                    DetailSheet(memory: memory)
+                        .presentationDetents([.medium])
+                        .presentationDragIndicator(.visible)
                 }
             }
         }

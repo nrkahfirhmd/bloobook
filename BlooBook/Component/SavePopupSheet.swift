@@ -15,7 +15,7 @@ enum SaveMode {
 
 struct SavePopupSheet: View {
     @Environment(\.modelContext) private var context
-    
+    @Environment(\.dismiss) private var dismiss
     var currentImage: UIImage?
     @Binding var stamp: String
     @Binding var showSavePopup: Bool
@@ -56,16 +56,14 @@ struct SavePopupSheet: View {
                                 imageView(image)
                             }
                         }
-                        
                         mode == .create ?
                         Text("Adjust the image as you like")
                             .font(.caption2)
                             .italic()
                             .foregroundStyle(.tertiary)
+                            .padding(.top, 12)
                         : nil
                     }
-                    .padding(.top, 48)
-                    .padding(.bottom, 24)
                     
                     if mode == .create {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -128,32 +126,6 @@ struct SavePopupSheet: View {
                                     }
                                 }
                         }
-                        
-                        Button(action: {
-                            if mode == .create {
-                                createMemory()
-                            } else {
-                                updateMemory()
-                            }
-                        }) {
-                            HStack {
-                                Image(systemName: "photo.artframe")
-                                
-                                Text(mode == .create ? "Save" : "Update")
-                            }
-                            .font(.headline)
-                            .foregroundColor(.white)
-                            .padding()
-                            .background(Color.blue)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
-                        }
-                        .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .padding(.top)
-                        
-                        Button("Cancel") {
-                            showSavePopup = false
-                        }
-                        .padding(.vertical)
                     }
                     .padding(.horizontal)
                 }
@@ -162,6 +134,29 @@ struct SavePopupSheet: View {
                 }
                 .onChange(of: existingMemory) { _, _ in
                     loadExistingMemory()
+                }
+            }
+            .toolbar{
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        if mode == .create {
+                            createMemory()
+                        } else {
+                            updateMemory()
+                        }
+                        dismiss()
+                    } label: {
+                        Text(mode == .create ? "Save" : "Update")
+                    }
+                    .buttonStyle(.glassProminent)
+                    .disabled(titleText.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
             .navigationTitle("Save Memory")
@@ -212,10 +207,7 @@ struct SavePopupSheet: View {
                     Image(uiImage: image)
                         .resizable()
                         .scaledToFill()
-                        .frame(
-                            width:  config.photoRect.width  * (mode == .create ? scale : 1),
-                            height: config.photoRect.height * (mode == .create ? scale : 1)
-                        )
+                        .scaleEffect(mode == .create ? scale : 1)
                         .offset(mode == .create ? offset : .zero)
                         .frame(width: config.photoRect.width, height: config.photoRect.height, alignment: .center)
                         .clipped()
@@ -227,15 +219,14 @@ struct SavePopupSheet: View {
                             bottom:   config.frameSize.height - config.photoRect.maxY,
                             trailing: config.frameSize.width  - config.photoRect.maxX
                         ))
-
+                    
                     Image(stamp)
                         .resizable()
                         .scaledToFill()
                         .frame(width: config.frameSize.width, height: config.frameSize.height)
-                        .shadow(color: .black.opacity(0.25), radius: 10, x: 0, y: 6)
+                        .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
                         .allowsHitTesting(false)
                 }
-                .frame(width: config.photoRect.width, height: config.photoRect.height)
             } else {
                 ZStack {
                     Image(uiImage: image)
@@ -264,7 +255,7 @@ struct SavePopupSheet: View {
         .onAppear { maskBounds = calculateMaskBounds() }
         .onChange(of: stamp) { _, _ in maskBounds = calculateMaskBounds() }
     }
-
+    
     private func dragGesture() -> some Gesture {
         DragGesture()
             .onChanged { value in
@@ -276,7 +267,7 @@ struct SavePopupSheet: View {
             }
             .onEnded { _ in lastOffset = offset }
     }
-
+    
     private func magnifyGesture() -> some Gesture {
         MagnificationGesture()
             .onChanged { value in
@@ -312,61 +303,64 @@ struct SavePopupSheet: View {
     }
     
     func clampScale(_ newScale: CGFloat) -> CGFloat {
+        if isPolaroid(stamp: stamp) {
+            return min(maxScale, max(1, newScale))
+        }
         return min(maxScale, max(minScale, newScale))
     }
     
     func clampOffset(_ proposedOffset: CGSize, scale: CGFloat) -> CGSize {
         if isPolaroid(stamp: stamp), let config = polaroidConfig(for: stamp) {
             let photoRect = config.photoRect
-
+            
             let photo: UIImage? = {
                 if mode == .create { return currentImage }
                 if let data = existingMemory?.imageData { return UIImage(data: data) }
                 return nil
             }()
-
+            
             guard let photo else { return proposedOffset }
-
+            
             let aspectWidth  = photoRect.width  / photo.size.width
             let aspectHeight = photoRect.height / photo.size.height
             let baseFillScale = max(aspectWidth, aspectHeight)
-
+            
             let scaledWidth  = photo.size.width  * baseFillScale * scale
             let scaledHeight = photo.size.height * baseFillScale * scale
-
+            
             let horizontalLimit = max(0, (scaledWidth  - photoRect.width)  / 2)
             let verticalLimit   = max(0, (scaledHeight - photoRect.height) / 2)
-
+            debugPrint(horizontalLimit, verticalLimit)
             return CGSize(
                 width:  min(max(proposedOffset.width,  -horizontalLimit), horizontalLimit),
                 height: min(max(proposedOffset.height, -verticalLimit),   verticalLimit)
             )
-
+            
         } else {
             let maskBounds = calculateMaskBounds()
-
+            
             let maskCenterX = maskBounds.midX
             let maskCenterY = maskBounds.midY
             let canvasCenterX = canvasSize.width  / 2
             let canvasCenterY = canvasSize.height / 2
-
+            
             let deltaX = maskCenterX - canvasCenterX
             let deltaY = maskCenterY - canvasCenterY
-
+            
             let adjustedOffset = CGSize(
                 width:  proposedOffset.width  + deltaX,
                 height: proposedOffset.height + deltaY
             )
-
+            
             let scaledImageWidth  = canvasSize.width  * scale
             let scaledImageHeight = canvasSize.height * scale
-
+            
             let horizontalLimit = max(0, (scaledImageWidth  - maskBounds.width)  / 2)
             let verticalLimit   = max(0, (scaledImageHeight - maskBounds.height) / 2)
-
+            
             let clampedX = min(max(adjustedOffset.width,  -horizontalLimit), horizontalLimit)
             let clampedY = min(max(adjustedOffset.height, -verticalLimit),   verticalLimit)
-
+            
             return CGSize(width: clampedX - deltaX, height: clampedY - deltaY)
         }
     }
@@ -410,38 +404,38 @@ struct SavePopupSheet: View {
     ) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.opaque = false
-
+        
         let renderer = UIGraphicsImageRenderer(size: canvasSize, format: format)
-
+        
         if isPolaroid(stamp: stamp), let config = polaroidConfig(for: stamp) {
             let image = renderer.image { context in
                 let cg = context.cgContext
-
+                
                 let frameOriginX = (canvasSize.width  - config.frameSize.width)  / 2
                 let frameOriginY = (canvasSize.height - config.frameSize.height) / 2
-
+                
                 let photoDestRect = CGRect(
                     x: frameOriginX + config.photoRect.origin.x,
                     y: frameOriginY + config.photoRect.origin.y,
                     width: config.photoRect.width,
                     height: config.photoRect.height
                 )
-
+                
                 cg.saveGState()
                 cg.clip(to: photoDestRect)
-
+                
                 let photoCenter = CGPoint(
                     x: photoDestRect.midX + offset.width,
                     y: photoDestRect.midY + offset.height
                 )
-
+                
                 let aspectWidth  = photoDestRect.width  / photo.size.width
                 let aspectHeight = photoDestRect.height / photo.size.height
                 let fillScale    = max(aspectWidth, aspectHeight) * scale
-
+                
                 let drawWidth  = photo.size.width  * fillScale
                 let drawHeight = photo.size.height * fillScale
-
+                
                 let drawRect = CGRect(
                     x: photoCenter.x - drawWidth  / 2,
                     y: photoCenter.y - drawHeight / 2,
@@ -450,14 +444,14 @@ struct SavePopupSheet: View {
                 )
                 photo.draw(in: drawRect)
                 cg.restoreGState()
-
+                
                 let frameDestRect = CGRect(
                     origin: CGPoint(x: frameOriginX, y: frameOriginY),
                     size: config.frameSize
                 )
                 maskImage.draw(in: frameDestRect)
             }
-
+            
             let scaleFactor = image.scale
             let cropRect = CGRect(
                 x: ((canvasSize.width  - config.frameSize.width)  / 2) * scaleFactor,
@@ -470,18 +464,18 @@ struct SavePopupSheet: View {
             }
             return image
         }
-
+        
         var maskRect: CGRect = .zero
-
+        
         let image = renderer.image { context in
             let cg = context.cgContext
-
+            
             let maskAspect  = maskImage.size.width / maskImage.size.height
             let canvasAspect = canvasSize.width / canvasSize.height
-
+            
             var maskWidth:  CGFloat
             var maskHeight: CGFloat
-
+            
             if maskAspect > canvasAspect {
                 maskWidth  = canvasSize.width
                 maskHeight = canvasSize.width / maskAspect
@@ -489,40 +483,40 @@ struct SavePopupSheet: View {
                 maskHeight = canvasSize.height
                 maskWidth  = canvasSize.height * maskAspect
             }
-
+            
             let scaleEffect: CGFloat = 0.55
             maskWidth  *= scaleEffect
             maskHeight *= scaleEffect
-
+            
             let maskOrigin = CGPoint(
                 x: (canvasSize.width  - maskWidth)  / 2,
                 y: (canvasSize.height - maskHeight) / 2
             )
             maskRect = CGRect(origin: maskOrigin, size: CGSize(width: maskWidth, height: maskHeight))
-
+            
             if let maskCG = maskImage.cgImage {
                 cg.saveGState()
                 cg.clip(to: maskRect, mask: maskCG)
             }
-
+            
             cg.scaleBy(x: scale, y: scale)
             cg.translateBy(
                 x: (canvasSize.width  / 2 + offset.width)  / scale,
                 y: (canvasSize.height / 2 + offset.height) / scale
             )
-
+            
             let aspectWidth  = canvasSize.width  / photo.size.width
             let aspectHeight = canvasSize.height / photo.size.height
             let fillScale    = max(aspectWidth, aspectHeight)
-
+            
             let drawWidth  = photo.size.width  * fillScale
             let drawHeight = photo.size.height * fillScale
-
+            
             photo.draw(in: CGRect(x: -drawWidth / 2, y: -drawHeight / 2,
                                   width: drawWidth, height: drawHeight))
             cg.restoreGState()
         }
-
+        
         let scaleFactor = image.scale
         let scaledRect = CGRect(
             x: maskRect.origin.x * scaleFactor,
@@ -552,8 +546,8 @@ extension View {
 #Preview {
     let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [])
     SavePopupSheet(
-        currentImage: UIImage(named: "temp"),
-        stamp: .constant("polaroid_frame_1"),
+        currentImage: UIImage(named: "photo_2"),
+        stamp: .constant("stamp_2"),
         showSavePopup: .constant(true),
         album: mockAlbum
     )
