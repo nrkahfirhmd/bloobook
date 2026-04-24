@@ -115,7 +115,7 @@ struct DraggableSticker: View {
                         sticker.posY = trashFrame.midY
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
-                        deletePhoto()
+                        deleteSticker()
                     }
                 }
                 
@@ -130,7 +130,7 @@ struct DraggableSticker: View {
             }
     }
     
-    func deletePhoto() {
+    func deleteSticker() {
         context.delete(sticker)
     }
 }

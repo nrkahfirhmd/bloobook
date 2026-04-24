@@ -11,8 +11,11 @@ import SwiftData
 
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
+    
     @State private var draggingPhoto: Photo? = nil
     @State private var draggingSticker: Sticker? = nil
+    @State private var draggingText: CanvasText? = nil
+    
     @State private var isDragging = false
     @State private var isOverTrash = false
     @State private var showBackgroundPicker = false
@@ -22,9 +25,11 @@ struct AlbumDetailView: View {
     @State private var showSavePopup: Bool = false
     @State private var defaultStamp: String = "stamp_1"
     @State private var trashFrame: CGRect = .zero
+    @State private var editingText: CanvasText?
     
     @State private var showMemoryPicker: Bool = false
     @State private var showStickerPicker: Bool = false
+    @State private var showTextEditor: Bool = false
     
     @Query var memories : [Memory]
     @Query var photos: [Photo]
@@ -56,6 +61,7 @@ struct AlbumDetailView: View {
             
             photosLayer
             stickersLayer
+            textLayer
         }
         .onChange(of: selectedItem) {
             Task {
@@ -75,6 +81,9 @@ struct AlbumDetailView: View {
             if newImage != nil {
                 showSavePopup = true
             }
+        }
+        .onAppear() {
+            editingText = CanvasText(text: TextContent(content: ""), position: CGPoint(x: 300, y: 250), scale: 1, rotation: Angle(degrees: 0), albums: [album])
         }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -122,7 +131,7 @@ struct AlbumDetailView: View {
                     }
                     
                     Button {
-                        // show text input
+                        showTextEditor.toggle()
                     } label: {
                         Label("Text", systemImage: "textformat")
                     }
@@ -160,6 +169,14 @@ struct AlbumDetailView: View {
             StickerPickerSheet(album: album)
                 .padding()
                 .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showTextEditor) {
+            if let text = editingText {
+                TextEditorSheet(album: album, textItem: text)
+                    .padding()
+                    .presentationDetents([.medium])
+                    .presentationDragIndicator(.visible)
+            }
         }
     }
     @MainActor
@@ -289,6 +306,19 @@ struct AlbumDetailView: View {
             )
             .allowsHitTesting(!(isDragging && draggingSticker?.id == sticker.id))
             .zIndex(draggingSticker?.id == sticker.id ? 100 : 0)
+        }
+    }
+    
+    @ViewBuilder
+    var textLayer: some View {
+        ForEach(album.texts) { text in
+            DraggableText(
+                textItem: text,
+                draggingText: $draggingText,
+                isDragging: $isDragging,
+                isOverTrash: $isOverTrash,
+                trashFrame: $trashFrame
+            )
         }
     }
 }
