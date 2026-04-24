@@ -117,7 +117,7 @@ struct AddAlbumSheet: View {
     }
     
     func saveAlbum() {
-        let album = Album(colorData: selectedColor.toData()!, imageData: imageData!, name: name, date: Date.now, photos: [])
+        let album = Album(colorData: selectedColor.toData()!, imageData: imageData!, name: name, date: Date.now, photos: [], stickers: [], texts: [])
         context.insert(album)
     }
     

@@ -44,7 +44,7 @@ struct AlbumCard: View {
                         .scaledToFill()
                         .frame(height: 120)
                         .mask(
-                            Image(.stampVertical)
+                            Image("stamp_1")
                                 .resizable()
                                 .scaledToFit()
                                 .frame(height: 120)

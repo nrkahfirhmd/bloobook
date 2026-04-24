@@ -442,7 +442,7 @@ extension View {
 }
 
 #Preview {
-    let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [])
+    let mockAlbum = Album(colorData: Data(), imageData: Data(), name: "Preview Album", date: Date(), photos: [], stickers: [], texts: [])
     SavePopupSheet(
         currentImage: UIImage(named: "temp"),
         stamp: .constant("stamp_1"),

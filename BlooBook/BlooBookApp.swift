@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct BlooBookApp: App {
+    @Environment(\.modelContext) var context
+    
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -18,7 +20,9 @@ struct BlooBookApp: App {
             Memory.self,
             Photo.self,
             Album.self,
-            Collection.self
+            Collection.self,
+            Sticker.self,
+            CanvasText.self
         ])
     }
 }
