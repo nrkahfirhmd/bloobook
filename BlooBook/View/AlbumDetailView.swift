@@ -12,9 +12,9 @@ import SwiftData
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
     
-    @State private var draggingPhoto: Photo? = nil
-    @State private var draggingSticker: Sticker? = nil
-    @State private var draggingText: CanvasText? = nil
+    @State private var draggingPhotoID: UUID? = nil
+    @State private var draggingStickerID: UUID? = nil
+    @State private var draggingTextID: UUID? = nil
     
     @State private var isDragging = false
     @State private var isOverTrash = false
@@ -234,7 +234,7 @@ struct AlbumDetailView: View {
             ForEach(album.photos) { photo in
                 DraggablePhoto(
                     photo: photo,
-                    draggingPhoto: .constant(nil),
+                    draggingPhotoID: .constant(nil),
                     isDragging: .constant(false),
                     isOverTrash: .constant(false),
                     trashFrame: .constant(.zero)
@@ -243,7 +243,7 @@ struct AlbumDetailView: View {
             ForEach(album.stickers) { sticker in
                 DraggableSticker(
                     sticker: sticker,
-                    draggingSticker: .constant(nil),
+                    draggingStickerID: .constant(nil),
                     isDragging: .constant(false),
                     isOverTrash: .constant(false),
                     trashFrame: .constant(.zero)
@@ -252,7 +252,7 @@ struct AlbumDetailView: View {
             ForEach(album.texts) { text in
                 DraggableText(
                     textItem: text,
-                    draggingText: .constant(nil),
+                    draggingTextID: .constant(nil),
                     isDragging: .constant(false),
                     isOverTrash: .constant(false),
                     trashFrame: .constant(.zero)
@@ -313,13 +313,13 @@ struct AlbumDetailView: View {
         ForEach(album.photos) { photo in
             DraggablePhoto(
                 photo: photo,
-                draggingPhoto: $draggingPhoto,
+                draggingPhotoID: $draggingPhotoID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame
             )
-            .allowsHitTesting(!(isDragging && draggingPhoto?.id == photo.id))
-            .zIndex(draggingPhoto?.id == photo.id ? 100 : 0)
+            .allowsHitTesting(!(isDragging && draggingPhotoID == photo.id))
+            .zIndex(draggingPhotoID == photo.id ? 100 : 0)
         }
     }
     
@@ -328,13 +328,13 @@ struct AlbumDetailView: View {
         ForEach(album.stickers) { sticker in
             DraggableSticker(
                 sticker: sticker,
-                draggingSticker: $draggingSticker,
+                draggingStickerID: $draggingStickerID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame
             )
-            .allowsHitTesting(!(isDragging && draggingSticker?.id == sticker.id))
-            .zIndex(draggingSticker?.id == sticker.id ? 100 : 0)
+            .allowsHitTesting(!(isDragging && draggingStickerID == sticker.id))
+            .zIndex(draggingStickerID == sticker.id ? 100 : 0)
         }
     }
     
@@ -343,7 +343,7 @@ struct AlbumDetailView: View {
         ForEach(album.texts) { text in
             DraggableText(
                 textItem: text,
-                draggingText: $draggingText,
+                draggingTextID: $draggingTextID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame
@@ -351,4 +351,3 @@ struct AlbumDetailView: View {
         }
     }
 }
-
