@@ -14,6 +14,7 @@ struct PhotoPickerSheet: View {
     let memories: [Memory]
     @State private var selectedMemories: Set<Memory> = []
     @Bindable var album: Album
+    @State private var rotations: [UUID: Double] = [:]
     var columns = [
         GridItem(.flexible(), spacing: 2),
         GridItem(.flexible(), spacing: 2)
@@ -28,13 +29,22 @@ struct PhotoPickerSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle("Select Memory")
+            .navigationTitle("Add Photo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction){
-                    Button("Save") {
-                       savePhotos()
+                    Button(role: .confirm){
+                        savePhotos()
                         dismiss()
+                    }label: {
+                        Image(systemName: "checkmark")
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction){
+                    Button(role: .cancel){
+                        dismiss()
+                    }label: {
+                        Image(systemName: "xmark")
                     }
                 }
             }
@@ -42,7 +52,9 @@ struct PhotoPickerSheet: View {
     }
     
     func selectableCard(_ memory: Memory) -> some View {
-        ZStack(alignment: .topTrailing) {
+        let rotation = rotations[memory.id] ?? 0
+        
+        return ZStack(alignment: .topTrailing) {
             if let uiImage = UIImage(data: memory.imageData) {
                 Image(uiImage: uiImage)
                     .resizable()
@@ -57,14 +69,18 @@ struct PhotoPickerSheet: View {
                     .font(.headline)
                     .foregroundColor(.blue)
                     .background {
-                        Circle()
-                            .fill(.primary)
+                        Circle().fill(.primary)
                     }
                     .overlay {
-                        Circle()
-                            .stroke(Color.primary, lineWidth: 2)
+                        Circle().stroke(Color.primary, lineWidth: 2)
                     }
                     .padding(12)
+            }
+        }
+        .rotationEffect(.degrees(rotation))
+        .onAppear {
+            if rotations[memory.id] == nil {
+                rotations[memory.id] = Double.random(in: -5...5)
             }
         }
         .onTapGesture {

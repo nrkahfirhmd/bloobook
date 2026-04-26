@@ -52,11 +52,6 @@ struct AlbumDetailView: View {
                 .frame(width: screenSize.width, height: screenSize.height)
                 .ignoresSafeArea()
             
-            if album.photos.isEmpty {
-                Text("Tap + to add stamp")
-                    .foregroundStyle(.gray)
-            }
-            
             trashLayer
             
             photosLayer
@@ -105,17 +100,17 @@ struct AlbumDetailView: View {
                     } label: {
                         Text("White")
                     }
-                        
+                    
                     Button {
                         background = .paper2
                     } label: {
                         Text("Vintage")
                     }
-
+                    
                     Button {
                         background = .paper3
                     } label: {
-                        Text("Vintage")
+                        Text("Dark")
                     }
                 } label: {
                     Image(systemName: "paintpalette.fill")
@@ -185,10 +180,11 @@ struct AlbumDetailView: View {
             if let text = editingText {
                 TextEditorSheet(album: album, textItem: text)
                     .padding()
-                    .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
         }
+        
+        
     }
     @MainActor
     func RenderAlbum() -> UIImage? {
@@ -202,63 +198,21 @@ struct AlbumDetailView: View {
         return renderer.uiImage
     }
     var albumContentView: some View {
-        ZStack {
-            Image(background)
-                .resizable()
-                .scaledToFill()
-                .frame(width: screenSize.width, height: screenSize.height)
-                .ignoresSafeArea()
-            
-            if album.photos.isEmpty {
-                Text("Tap + to add stamp")
-                    .foregroundStyle(.gray)
-            }
-            
-            VStack {
-                Spacer()
+        GeometryReader { proxy in
+            ZStack {
+                Image(background)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: screenSize.width, height: screenSize.height)
+                    .ignoresSafeArea()
                 
-                if isDragging {
-                    VStack{
-                        Text("Drag to delete")
-                            .font(.caption)
-                            .bold()
-                            .foregroundStyle(.background)
-                        Image(systemName: "trash.circle.fill")
-                            .font(.system(size: 60))
-                    }
-                    .foregroundColor(isOverTrash ? .red : .gray)
-                    .scaleEffect(isOverTrash ? 1.2 : 1)
-                }
-            }
-            
-            ForEach(album.photos) { photo in
-                DraggablePhoto(
-                    photo: photo,
-                    draggingPhotoID: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
-            }
-            ForEach(album.stickers) { sticker in
-                DraggableSticker(
-                    sticker: sticker,
-                    draggingStickerID: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
-            }
-            ForEach(album.texts) { text in
-                DraggableText(
-                    textItem: text,
-                    draggingTextID: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
+                photosLayer
+                stickersLayer
+                textLayer
             }
         }
+        .coordinateSpace(name: "canvas")
+        
     }
     
     func shareImage(_ image: UIImage) {
@@ -284,7 +238,7 @@ struct AlbumDetailView: View {
                     Text("Drag to delete")
                         .font(.caption)
                         .bold()
-                        .foregroundStyle(.background)
+                        .foregroundStyle(background == .paper3 ? .white : .black)
                     Image(systemName: "trash.circle.fill")
                         .font(.system(size: 60))
                         .background(
@@ -316,10 +270,8 @@ struct AlbumDetailView: View {
                 draggingPhotoID: $draggingPhotoID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
-                trashFrame: $trashFrame
+                trashFrame: $trashFrame,
             )
-            .allowsHitTesting(!(isDragging && draggingPhotoID == photo.id))
-            .zIndex(draggingPhotoID == photo.id ? 100 : 0)
         }
     }
     
@@ -346,7 +298,8 @@ struct AlbumDetailView: View {
                 draggingTextID: $draggingTextID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
-                trashFrame: $trashFrame
+                trashFrame: $trashFrame,
+                backgroundImage: background
             )
         }
     }
