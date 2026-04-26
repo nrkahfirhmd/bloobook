@@ -33,7 +33,7 @@ struct ShowcaseView: View {
             .padding(20)
         } else {
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 16) {
+                LazyVGrid(columns: columns, spacing: 32) {
                     ForEach(memories) { memory in
                         VStack {
                             if let uiImage = UIImage(data: memory.imageData) {
@@ -42,6 +42,7 @@ struct ShowcaseView: View {
                                     .scaledToFit()
                                     .frame(height: 150)
                                     .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
+                                    .rotationEffect(Angle(degrees: Double.random(in: -5...5)))
                             }
                             
                             Text(memory.title).bold()
@@ -56,7 +57,8 @@ struct ShowcaseView: View {
                     }
                 }
                 .padding()
-                .navigationTitle("Stamp")
+                .navigationTitle("All Memories")
+                .navigationBarTitleDisplayMode(.inline)
                 .sheet(item: $selectedMemory) { memory in
                     DetailSheet(memory: memory) {
                         selectedMemory = nil

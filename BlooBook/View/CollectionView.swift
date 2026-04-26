@@ -33,7 +33,7 @@ struct CollectionView: View {
                             ShowcaseView()
                         } label: {
                             HStack {
-                                Text("All Photos")
+                                Text("All Memories")
                                     .font(.headline)
                                 Image(systemName: "chevron.right")
                             }
@@ -249,14 +249,17 @@ struct CollectionView: View {
                 .sheet(isPresented: $showAddCollectionSheet) {
                     AddCollectionSheet()
                         .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
                 }
                 .sheet(isPresented: $showAddBookSheet) {
                     AddAlbumSheet()
                         .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
                 }
                 .sheet(item: $selectedAlbum) { album in
                     AddAlbumSheet(existingAlbum: album, mode: .edit)
                         .presentationDetents([.large])
+                        .presentationDragIndicator(.visible)
                 }
                 .sheet(item: $selectedMemory) { memory in
                     DetailSheet(memory: memory) {

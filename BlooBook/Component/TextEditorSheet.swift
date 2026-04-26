@@ -18,50 +18,67 @@ struct TextEditorSheet: View {
     @State private var contentText: TextContent = TextContent(content: "")
     
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(alignment: .leading) {
-                HStack(spacing: 2) {
-                    Text("Enter text")
-                        .font(.title3)
-                        .fontWeight(.medium)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading) {
+                        HStack(spacing: 2) {
+                            Text("Enter text")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            
+                            Text("*")
+                                .foregroundStyle(Color.red)
+                        }
+                        
+                        TextField("Rawr", text: $contentText.content)
+                            .padding(16)
+                            .background(.regularMaterial)
+                            .cornerRadius(20)
+                    }
                     
-                    Text("*")
-                        .foregroundStyle(Color.red)
+                    Picker("Font", selection: $contentText.fontName) {
+                        Text("Helvetica").tag("Helvetica")
+                        Text("Georgia").tag("Georiga")
+                        Text("Courier").tag("Courier")
+                        Text("Avenir").tag("Avenir")
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Picker("Size", selection: $contentText.fontSize) {
+                        Text("Small").tag(18.0)
+                        Text("Medium").tag(24.0)
+                        Text("Large").tag(32.0)
+                        Text("XL").tag(40.0)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Toggle("Bold", isOn: $contentText.isBold)
+                    
+                    Toggle("Italic", isOn: $contentText.isItalic)
                 }
-                
-                TextField("Rawr", text: $contentText.content)
-                    .padding(16)
-                    .background(.regularMaterial)
-                    .cornerRadius(20)
+                .padding()
             }
             
-            Picker("Font", selection: $contentText.fontName) {
-                Text("Helvetica").tag("Helvetica")
-                Text("Georgia").tag("Georiga")
-                Text("Courier").tag("Courier")
-                Text("Avenir").tag("Avenir")
+            .navigationTitle("Add Text")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction){
+                    Button(role: .confirm){
+                        saveText()
+                         dismiss()
+                    }label: {
+                       Image(systemName: "checkmark")
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction){
+                    Button(role: .cancel){
+                         dismiss()
+                    }label: {
+                       Image(systemName: "xmark")
+                    }
+                }
             }
-            .pickerStyle(.segmented)
-            
-            Picker("Size", selection: $contentText.fontSize) {
-                Text("Small").tag(18.0)
-                Text("Medium").tag(24.0)
-                Text("Large").tag(32.0)
-                Text("XL").tag(40.0)
-            }
-            .pickerStyle(.segmented)
-            
-            Toggle("Bold", isOn: $contentText.isBold)
-            
-            Toggle("Italic", isOn: $contentText.isItalic)
-            
-            Button("Done") {
-                saveText()
-                
-                dismiss()
-            }
-            .padding()
-            .buttonStyle(.borderedProminent)
         }
     }
     

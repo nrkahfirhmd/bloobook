@@ -6,7 +6,12 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		5F5ED68C2F9DF96E00C22D3E /* Stickers in Resources */ = {isa = PBXBuildFile; fileRef = 5F5ED68B2F9DF96E00C22D3E /* Stickers */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		5F5ED68B2F9DF96E00C22D3E /* Stickers */ = {isa = PBXFileReference; lastKnownFileType = folder; name = Stickers; path = Resources/Stickers; sourceTree = "<group>"; };
 		CCE7563B2F90A94C004EC24F /* BlooBook.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlooBook.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -45,6 +50,7 @@
 		CCE756322F90A94C004EC24F = {
 			isa = PBXGroup;
 			children = (
+				5F5ED68B2F9DF96E00C22D3E /* Stickers */,
 				CCE7563D2F90A94C004EC24F /* BlooBook */,
 				CCE7563C2F90A94C004EC24F /* Products */,
 			);
@@ -122,6 +128,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5F5ED68C2F9DF96E00C22D3E /* Stickers in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -270,9 +277,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BlooBook/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to capture and decorate your photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to capture photos that you can add to your memory boards.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app accesses your photo library so you can select and import images into your memory boards.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app saves edited or newly created images to your photo library when you choose to export them.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -306,9 +313,9 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BlooBook/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to capture and decorate your photos.";
-				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app uses the camera to capture photos that you can add to your memory boards.";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "This app accesses your photo library so you can select and import images into your memory boards.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app saves edited or newly created images to your photo library when you choose to export them.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

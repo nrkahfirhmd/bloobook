@@ -12,9 +12,9 @@ import SwiftData
 struct AlbumDetailView: View {
     @Environment(\.dismiss) var dismiss
     
-    @State private var draggingPhoto: Photo? = nil
-    @State private var draggingSticker: Sticker? = nil
-    @State private var draggingText: CanvasText? = nil
+    @State private var draggingPhotoID: UUID? = nil
+    @State private var draggingStickerID: UUID? = nil
+    @State private var draggingTextID: UUID? = nil
     
     @State private var isDragging = false
     @State private var isOverTrash = false
@@ -51,11 +51,6 @@ struct AlbumDetailView: View {
                 .scaledToFill()
                 .frame(width: screenSize.width, height: screenSize.height)
                 .ignoresSafeArea()
-            
-            if album.photos.isEmpty {
-                Text("Tap + to add stamp")
-                    .foregroundStyle(.gray)
-            }
             
             trashLayer
             
@@ -105,17 +100,17 @@ struct AlbumDetailView: View {
                     } label: {
                         Text("White")
                     }
-                        
+                    
                     Button {
                         background = .paper2
                     } label: {
                         Text("Vintage")
                     }
-
+                    
                     Button {
                         background = .paper3
                     } label: {
-                        Text("Vintage")
+                        Text("Dark")
                     }
                 } label: {
                     Image(systemName: "paintpalette.fill")
@@ -185,10 +180,11 @@ struct AlbumDetailView: View {
             if let text = editingText {
                 TextEditorSheet(album: album, textItem: text)
                     .padding()
-                    .presentationDetents([.medium])
                     .presentationDragIndicator(.visible)
             }
         }
+        
+        
     }
     @MainActor
     func RenderAlbum() -> UIImage? {
@@ -202,63 +198,21 @@ struct AlbumDetailView: View {
         return renderer.uiImage
     }
     var albumContentView: some View {
-        ZStack {
-            Image(background)
-                .resizable()
-                .scaledToFill()
-                .frame(width: screenSize.width, height: screenSize.height)
-                .ignoresSafeArea()
-            
-            if album.photos.isEmpty {
-                Text("Tap + to add stamp")
-                    .foregroundStyle(.gray)
-            }
-            
-            VStack {
-                Spacer()
+        GeometryReader { proxy in
+            ZStack {
+                Image(background)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: screenSize.width, height: screenSize.height)
+                    .ignoresSafeArea()
                 
-                if isDragging {
-                    VStack{
-                        Text("Drag to delete")
-                            .font(.caption)
-                            .bold()
-                            .foregroundStyle(.background)
-                        Image(systemName: "trash.circle.fill")
-                            .font(.system(size: 60))
-                    }
-                    .foregroundColor(isOverTrash ? .red : .gray)
-                    .scaleEffect(isOverTrash ? 1.2 : 1)
-                }
-            }
-            
-            ForEach(album.photos) { photo in
-                DraggablePhoto(
-                    photo: photo,
-                    draggingPhoto: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
-            }
-            ForEach(album.stickers) { sticker in
-                DraggableSticker(
-                    sticker: sticker,
-                    draggingSticker: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
-            }
-            ForEach(album.texts) { text in
-                DraggableText(
-                    textItem: text,
-                    draggingText: .constant(nil),
-                    isDragging: .constant(false),
-                    isOverTrash: .constant(false),
-                    trashFrame: .constant(.zero)
-                )
+                photosLayer
+                stickersLayer
+                textLayer
             }
         }
+        .coordinateSpace(name: "canvas")
+        
     }
     
     func shareImage(_ image: UIImage) {
@@ -284,7 +238,7 @@ struct AlbumDetailView: View {
                     Text("Drag to delete")
                         .font(.caption)
                         .bold()
-                        .foregroundStyle(.background)
+                        .foregroundStyle(background == .paper3 ? .white : .black)
                     Image(systemName: "trash.circle.fill")
                         .font(.system(size: 60))
                         .background(
@@ -313,13 +267,11 @@ struct AlbumDetailView: View {
         ForEach(album.photos) { photo in
             DraggablePhoto(
                 photo: photo,
-                draggingPhoto: $draggingPhoto,
+                draggingPhotoID: $draggingPhotoID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
-                trashFrame: $trashFrame
+                trashFrame: $trashFrame,
             )
-            .allowsHitTesting(!(isDragging && draggingPhoto?.id == photo.id))
-            .zIndex(draggingPhoto?.id == photo.id ? 100 : 0)
         }
     }
     
@@ -328,13 +280,13 @@ struct AlbumDetailView: View {
         ForEach(album.stickers) { sticker in
             DraggableSticker(
                 sticker: sticker,
-                draggingSticker: $draggingSticker,
+                draggingStickerID: $draggingStickerID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame
             )
-            .allowsHitTesting(!(isDragging && draggingSticker?.id == sticker.id))
-            .zIndex(draggingSticker?.id == sticker.id ? 100 : 0)
+            .allowsHitTesting(!(isDragging && draggingStickerID == sticker.id))
+            .zIndex(draggingStickerID == sticker.id ? 100 : 0)
         }
     }
     
@@ -343,12 +295,12 @@ struct AlbumDetailView: View {
         ForEach(album.texts) { text in
             DraggableText(
                 textItem: text,
-                draggingText: $draggingText,
+                draggingTextID: $draggingTextID,
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
-                trashFrame: $trashFrame
+                trashFrame: $trashFrame,
+                backgroundImage: background
             )
         }
     }
 }
-

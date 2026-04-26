@@ -12,7 +12,7 @@ struct DraggableText: View {
     @Environment(\.modelContext) private var context
     
     @Bindable var textItem: CanvasText
-    @Binding var draggingText: CanvasText?
+    @Binding var draggingTextID: UUID?
     @Binding var isDragging: Bool
     @Binding var isOverTrash: Bool
     @Binding var trashFrame: CGRect
@@ -21,6 +21,11 @@ struct DraggableText: View {
     @State private var lastPosition: CGPoint = .zero
     @State private var lastScale: CGFloat = 1
     @State private var lastRotation: Double = 0
+    @State private var currentPosition: CGPoint = .zero
+    @State private var currentScale: CGFloat = 1
+    @State private var currentRotation: Angle = .zero
+    
+    var backgroundImage: ImageResource
     
     var fontSettings: Font {
         let base = Font.custom(textItem.text.fontName, size: textItem.text.fontSize)
@@ -40,15 +45,34 @@ struct DraggableText: View {
         Group {
             Text(textItem.text.content)
                 .font(fontSettings)
+                .foregroundColor(backgroundImage == .paper3 ? .white : .black)
         }
-        .position(textItem.position)
-        .rotationEffect(textItem.rotationAngle)
-        .scaleEffect(textItem.scale * trashScaleEffect)
+        .rotationEffect(currentRotation)
+        .scaleEffect(currentScale * trashScaleEffect)
+        .position(currentPosition)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: trashScaleEffect)
         .onAppear {
-            lastPosition = textItem.position
-            lastScale = textItem.scale
-            lastRotation = textItem.rotation
+            syncFromModel()
+        }
+        .onChange(of: textItem.posX) { _, _ in
+            if draggingTextID != textItem.id {
+                syncFromModel()
+            }
+        }
+        .onChange(of: textItem.posY) { _, _ in
+            if draggingTextID != textItem.id {
+                syncFromModel()
+            }
+        }
+        .onChange(of: textItem.scale) { _, _ in
+            if draggingTextID != textItem.id {
+                syncFromModel()
+            }
+        }
+        .onChange(of: textItem.rotation) { _, _ in
+            if draggingTextID != textItem.id {
+                syncFromModel()
+            }
         }
         .gesture(combinedGesture)
     }
@@ -62,9 +86,12 @@ struct DraggableText: View {
             .simultaneously(with: scale)
             .simultaneously(with: rotate)
             .onChanged { value in
-                
-                draggingText = textItem
-                isDragging = true
+                if draggingTextID != textItem.id {
+                    draggingTextID = textItem.id
+                }
+                if !isDragging {
+                    isDragging = true
+                }
                 
                 let dragValue = value.first?.first
                 let scaleValue = value.first?.second
@@ -72,15 +99,12 @@ struct DraggableText: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = lastRotation
-                    
-                    let adjustedX = t.width * cos(angle) + t.height * sin(angle)
-                    let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    
                     let damping = 1 / sqrt(max(textItem.scale, 0.5))
-                    
-                    textItem.posX = lastPosition.x + adjustedX * damping
-                    textItem.posY = lastPosition.y + adjustedY * damping
+
+                    currentPosition = CGPoint(
+                        x: lastPosition.x + t.width * damping,
+                        y: lastPosition.y + t.height * damping
+                    )
                     
                     let touchPoint = dragValue.location
                     let expandedTrash = trashFrame.insetBy(dx: -20, dy: -150)
@@ -102,44 +126,60 @@ struct DraggableText: View {
                     
                     if isOverTrash {
                         let lerp: CGFloat = 0.2
-                        textItem.posX += (trashFrame.midX - textItem.posX - 100) * lerp
-                        textItem.posY += (trashFrame.midY - textItem.posY - 100) * lerp
+                        currentPosition.x += (trashFrame.midX - currentPosition.x - 100) * lerp
+                        currentPosition.y += (trashFrame.midY - currentPosition.y - 100) * lerp
                     }
                 }
                 
                 if let scaleValue {
                     let newScale = lastScale * scaleValue
-                    textItem.scale = min(max(newScale, 0.75), 3.0)
+                    currentScale = min(max(newScale, 0.75), 3.0)
                 }
                 
                 if let rotationValue {
-                    textItem.rotation = lastRotation + rotationValue.radians
+                    currentRotation = Angle(radians: lastRotation + rotationValue.radians)
                 }
             }
             .onEnded { _ in
-                
                 if isOverTrash {
                     withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) {
-                        textItem.posX = trashFrame.midX
-                        textItem.posY = trashFrame.midY
+                        currentPosition = CGPoint(x: trashFrame.midX, y: trashFrame.midY)
                     }
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) {
                         deleteText()
                     }
+                } else {
+                    textItem.posX = currentPosition.x
+                    textItem.posY = currentPosition.y
+                    textItem.scale = currentScale
+                    textItem.rotation = currentRotation.radians
                 }
                 
                 trashScaleEffect = 1
                 isDragging = false
                 isOverTrash = false
-                draggingText = nil
+                draggingTextID = nil
                 
-                lastPosition = textItem.position
-                lastScale = textItem.scale
-                lastRotation = textItem.rotation
+                lastPosition = currentPosition
+                lastScale = currentScale
+                lastRotation = currentRotation.radians
             }
     }
     
     func deleteText() {
         context.delete(textItem)
+    }
+
+    private func syncFromModel() {
+        let position = textItem.position
+        let scale = textItem.scaleCGFloat
+        let rotation = textItem.rotationAngle
+
+        lastPosition = position
+        lastScale = scale
+        lastRotation = rotation.radians
+        currentPosition = position
+        currentScale = scale
+        currentRotation = rotation
     }
 }
