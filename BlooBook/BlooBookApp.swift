@@ -20,7 +20,7 @@ struct BlooBookApp: App {
             Memory.self,
             Photo.self,
             Album.self,
-            Collection.self,
+            AlbumCollection.self,
             Sticker.self,
             CanvasText.self
         ])

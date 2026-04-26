@@ -26,7 +26,7 @@ class Album {
     @Relationship(inverse: \CanvasText.albums)
     var texts: [CanvasText]
     
-    var collections: [Collection] = []
+    var collections: [AlbumCollection] = []
     
     init(colorData: Data, imageData: Data, name: String, date: Date, photos: [Photo], stickers: [Sticker], texts: [CanvasText]) {
         self.colorData = colorData

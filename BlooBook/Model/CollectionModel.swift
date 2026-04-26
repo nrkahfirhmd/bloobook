@@ -9,7 +9,7 @@ import Foundation
 import SwiftData
 
 @Model
-class Collection {
+class AlbumCollection {
     var id = UUID()
     var name: String
     
