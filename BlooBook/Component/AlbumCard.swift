@@ -56,6 +56,7 @@ struct AlbumCard: View {
                 VStack(alignment: .trailing){
                     Text(album.name)
                         .font(.headline)
+                        .multilineTextAlignment(.trailing)
                     Text(album.date, format: .dateTime.month().year())
                         .font(.caption)
                 }

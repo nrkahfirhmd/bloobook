@@ -13,9 +13,11 @@ struct TextEditorSheet: View {
     @Environment(\.modelContext) private var context
     
     @Bindable var album: Album
-    @Bindable var textItem: CanvasText
+    var textItem: CanvasText?
     
     @State private var contentText: TextContent = TextContent(content: "")
+    
+    var isEditing: Bool { textItem != nil }
     
     var body: some View {
         NavigationStack {
@@ -31,7 +33,8 @@ struct TextEditorSheet: View {
                                 .foregroundStyle(Color.red)
                         }
                         
-                        TextField("Rawr", text: $contentText.content)
+                        TextField("Add your text here...", text: $contentText.content, axis: .vertical)
+                            .lineLimit(3...6)
                             .padding(16)
                             .background(.regularMaterial)
                             .cornerRadius(20)
@@ -60,24 +63,33 @@ struct TextEditorSheet: View {
                 .padding()
             }
             
-            .navigationTitle("Add Text")
+            .navigationTitle(isEditing ? "Edit Text" : "Add Text")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction){
-                    Button(role: .confirm){
-                        saveText()
-                         dismiss()
-                    }label: {
-                       Image(systemName: "checkmark")
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        isEditing ? updateText() : saveText()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
                     }
                 }
-                ToolbarItem(placement: .cancellationAction){
-                    Button(role: .cancel){
-                         dismiss()
-                    }label: {
-                       Image(systemName: "xmark")
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .cancel) { dismiss() } label: {
+                        Image(systemName: "xmark")
                     }
                 }
+            }
+        }
+        .onAppear {
+            if let existing = textItem {
+                contentText = TextContent(
+                    content: existing.text.content,
+                    fontName: existing.text.fontName,
+                    fontSize: existing.text.fontSize,
+                    isBold: existing.text.isBold,
+                    isItalic: existing.text.isItalic
+                )
             }
         }
     }
@@ -96,6 +108,15 @@ struct TextEditorSheet: View {
         
         context.insert(text)
         album.texts.append(text)
+    }
+    
+    func updateText() {
+        guard let item = textItem else { return }
+        item.text.content  = contentText.content
+        item.text.fontName = contentText.fontName
+        item.text.fontSize = contentText.fontSize
+        item.text.isBold   = contentText.isBold
+        item.text.isItalic = contentText.isItalic
     }
 }
 

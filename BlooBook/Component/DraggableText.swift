@@ -25,6 +25,8 @@ struct DraggableText: View {
     @State private var currentScale: CGFloat = 1
     @State private var currentRotation: Angle = .zero
     
+    @Binding var selectedText: CanvasText?
+    
     var backgroundImage: ImageResource
     
     var fontSettings: Font {
@@ -46,6 +48,9 @@ struct DraggableText: View {
             Text(textItem.text.content)
                 .font(fontSettings)
                 .foregroundColor(backgroundImage == .paper3 ? .white : .black)
+                .onTapGesture {
+                    selectedText = textItem
+                }
         }
         .rotationEffect(currentRotation)
         .scaleEffect(currentScale * trashScaleEffect)

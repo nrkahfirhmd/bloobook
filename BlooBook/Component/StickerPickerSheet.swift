@@ -26,7 +26,7 @@ struct StickerPickerSheet: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 24) {
                     if stickerURLs.isEmpty {
-                        Text("Kosong pak kaya hati")
+                        Text("No sticker available")
                     } else {
                         ForEach(stickerURLs, id: \.self) { url in
                             selectableCard(url)
