@@ -31,6 +31,8 @@ struct AlbumDetailView: View {
     @State private var showStickerPicker: Bool = false
     @State private var showTextEditor: Bool = false
     
+    @State private var selectedText: CanvasText?
+    
     @Query var memories : [Memory]
     @Query var photos: [Photo]
     @Query var stickers: [Sticker]
@@ -70,6 +72,12 @@ struct AlbumDetailView: View {
                         selectedItem = nil
                     }
                 }
+            }
+        }
+        .onChange(of: selectedText) { _, newValue in
+            if newValue != nil {
+                editingText = newValue
+                showTextEditor = true
             }
         }
         .onChange(of: currentImage) { _, newImage in
@@ -132,6 +140,7 @@ struct AlbumDetailView: View {
                     }
                     
                     Button {
+                        editingText = nil
                         showTextEditor.toggle()
                     } label: {
                         Label("Text", systemImage: "textformat")
@@ -176,15 +185,14 @@ struct AlbumDetailView: View {
                 .padding()
                 .presentationDragIndicator(.visible)
         }
-        .sheet(isPresented: $showTextEditor) {
-            if let text = editingText {
-                TextEditorSheet(album: album, textItem: text)
-                    .padding()
-                    .presentationDragIndicator(.visible)
-            }
+        .sheet(isPresented: $showTextEditor, onDismiss: {
+            selectedText = nil
+            editingText = nil
+        }) {
+            TextEditorSheet(album: album, textItem: editingText)
+                .padding()
+                .presentationDragIndicator(.visible)
         }
-        
-        
     }
     @MainActor
     func RenderAlbum() -> UIImage? {
@@ -299,6 +307,7 @@ struct AlbumDetailView: View {
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame,
+                selectedText: $selectedText,
                 backgroundImage: background
             )
         }
