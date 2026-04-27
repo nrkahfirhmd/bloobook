@@ -41,9 +41,9 @@ struct DraggableSticker: View {
                     .frame(height: 150)
             }
         }
-        .position(currentPosition)
         .rotationEffect(currentRotation)
         .scaleEffect(currentScale * trashScaleEffect)
+        .position(currentPosition)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: trashScaleEffect)
         .onAppear {
             syncFromModel()
@@ -99,16 +99,11 @@ struct DraggableSticker: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = lastRotation
-                    
-                    let adjustedX = t.width * cos(angle) + t.height * sin(angle)
-                    let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    
                     let damping = 1 / sqrt(max(sticker.scale, 0.5))
-                    
+
                     currentPosition = CGPoint(
-                        x: lastPosition.x + adjustedX * damping,
-                        y: lastPosition.y + adjustedY * damping
+                        x: lastPosition.x + t.width * damping,
+                        y: lastPosition.y + t.height * damping
                     )
                     
                     let touchPoint = dragValue.location
@@ -131,8 +126,8 @@ struct DraggableSticker: View {
                     
                     if isOverTrash {
                         let lerp: CGFloat = 0.2
-                        currentPosition.x += (trashFrame.midX - currentPosition.x - 100) * lerp
-                        currentPosition.y += (trashFrame.midY - currentPosition.y - 100) * lerp
+                        currentPosition.x += (trashFrame.midX - currentPosition.x) * lerp
+                        currentPosition.y += (trashFrame.midY - currentPosition.y) * lerp
                     }
                 }
                 

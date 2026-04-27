@@ -13,55 +13,84 @@ struct TextEditorSheet: View {
     @Environment(\.modelContext) private var context
     
     @Bindable var album: Album
-    @Bindable var textItem: CanvasText
+    var textItem: CanvasText?
     
     @State private var contentText: TextContent = TextContent(content: "")
     
+    var isEditing: Bool { textItem != nil }
+    
     var body: some View {
-        VStack(spacing: 20) {
-            VStack(alignment: .leading) {
-                HStack(spacing: 2) {
-                    Text("Enter text")
-                        .font(.title3)
-                        .fontWeight(.medium)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading) {
+                        HStack(spacing: 2) {
+                            Text("Enter text")
+                                .font(.title3)
+                                .fontWeight(.medium)
+                            
+                            Text("*")
+                                .foregroundStyle(Color.red)
+                        }
+                        
+                        TextField("Add your text here...", text: $contentText.content, axis: .vertical)
+                            .lineLimit(3...6)
+                            .padding(16)
+                            .background(.regularMaterial)
+                            .cornerRadius(20)
+                    }
                     
-                    Text("*")
-                        .foregroundStyle(Color.red)
+                    Picker("Font", selection: $contentText.fontName) {
+                        Text("Helvetica").tag("Helvetica")
+                        Text("Georgia").tag("Georiga")
+                        Text("Courier").tag("Courier")
+                        Text("Avenir").tag("Avenir")
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Picker("Size", selection: $contentText.fontSize) {
+                        Text("Small").tag(18.0)
+                        Text("Medium").tag(24.0)
+                        Text("Large").tag(32.0)
+                        Text("XL").tag(40.0)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    Toggle("Bold", isOn: $contentText.isBold)
+                    
+                    Toggle("Italic", isOn: $contentText.isItalic)
                 }
-                
-                TextField("Rawr", text: $contentText.content)
-                    .padding(16)
-                    .background(.regularMaterial)
-                    .cornerRadius(20)
+                .padding()
             }
             
-            Picker("Font", selection: $contentText.fontName) {
-                Text("Helvetica").tag("Helvetica")
-                Text("Georgia").tag("Georiga")
-                Text("Courier").tag("Courier")
-                Text("Avenir").tag("Avenir")
+            .navigationTitle(isEditing ? "Edit Text" : "Add Text")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        isEditing ? updateText() : saveText()
+                        dismiss()
+                    } label: {
+                        Image(systemName: "checkmark")
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button(role: .cancel) { dismiss() } label: {
+                        Image(systemName: "xmark")
+                    }
+                }
             }
-            .pickerStyle(.segmented)
-            
-            Picker("Size", selection: $contentText.fontSize) {
-                Text("Small").tag(18.0)
-                Text("Medium").tag(24.0)
-                Text("Large").tag(32.0)
-                Text("XL").tag(40.0)
+        }
+        .onAppear {
+            if let existing = textItem {
+                contentText = TextContent(
+                    content: existing.text.content,
+                    fontName: existing.text.fontName,
+                    fontSize: existing.text.fontSize,
+                    isBold: existing.text.isBold,
+                    isItalic: existing.text.isItalic
+                )
             }
-            .pickerStyle(.segmented)
-            
-            Toggle("Bold", isOn: $contentText.isBold)
-            
-            Toggle("Italic", isOn: $contentText.isItalic)
-            
-            Button("Done") {
-                saveText()
-                
-                dismiss()
-            }
-            .padding()
-            .buttonStyle(.borderedProminent)
         }
     }
     
@@ -79,6 +108,15 @@ struct TextEditorSheet: View {
         
         context.insert(text)
         album.texts.append(text)
+    }
+    
+    func updateText() {
+        guard let item = textItem else { return }
+        item.text.content  = contentText.content
+        item.text.fontName = contentText.fontName
+        item.text.fontSize = contentText.fontSize
+        item.text.isBold   = contentText.isBold
+        item.text.isItalic = contentText.isItalic
     }
 }
 

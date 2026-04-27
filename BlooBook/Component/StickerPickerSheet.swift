@@ -26,7 +26,7 @@ struct StickerPickerSheet: View {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 24) {
                     if stickerURLs.isEmpty {
-                        Text("Kosong pak kaya hati")
+                        Text("No sticker available")
                     } else {
                         ForEach(stickerURLs, id: \.self) { url in
                             selectableCard(url)
@@ -35,14 +35,22 @@ struct StickerPickerSheet: View {
                 }
                 .padding()
             }
-            .navigationTitle("Select Sticker")
+            .navigationTitle("Add Sticker")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction){
-                    Button("Save") {
+                    Button(role: .confirm){
                         saveSticker()
-                        
-                        dismiss()
+                         dismiss()
+                    }label: {
+                       Image(systemName: "checkmark")
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction){
+                    Button(role: .cancel){
+                         dismiss()
+                    }label: {
+                       Image(systemName: "xmark")
                     }
                 }
             }

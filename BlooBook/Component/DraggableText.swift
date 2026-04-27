@@ -25,6 +25,10 @@ struct DraggableText: View {
     @State private var currentScale: CGFloat = 1
     @State private var currentRotation: Angle = .zero
     
+    @Binding var selectedText: CanvasText?
+    
+    var backgroundImage: ImageResource
+    
     var fontSettings: Font {
         let base = Font.custom(textItem.text.fontName, size: textItem.text.fontSize)
         
@@ -43,10 +47,14 @@ struct DraggableText: View {
         Group {
             Text(textItem.text.content)
                 .font(fontSettings)
+                .foregroundColor(backgroundImage == .paper3 ? .white : .black)
+                .onTapGesture {
+                    selectedText = textItem
+                }
         }
-        .position(currentPosition)
         .rotationEffect(currentRotation)
         .scaleEffect(currentScale * trashScaleEffect)
+        .position(currentPosition)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: trashScaleEffect)
         .onAppear {
             syncFromModel()
@@ -96,16 +104,11 @@ struct DraggableText: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = lastRotation
-                    
-                    let adjustedX = t.width * cos(angle) + t.height * sin(angle)
-                    let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    
                     let damping = 1 / sqrt(max(textItem.scale, 0.5))
-                    
+
                     currentPosition = CGPoint(
-                        x: lastPosition.x + adjustedX * damping,
-                        y: lastPosition.y + adjustedY * damping
+                        x: lastPosition.x + t.width * damping,
+                        y: lastPosition.y + t.height * damping
                     )
                     
                     let touchPoint = dragValue.location

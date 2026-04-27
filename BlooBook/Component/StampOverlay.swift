@@ -11,12 +11,19 @@ struct StampOverlay: View {
     var selectedFrame: String
     
     var body: some View {
-        Image(selectedFrame)
-            .resizable()
-            .scaledToFit()
+        if selectedFrame.contains("polaroid") {
+            Image(selectedFrame)
+                .resizable()
+                .scaledToFit()
+                .frame(width: 300, height: 300)
+        } else {
+            Image(selectedFrame)
+                .resizable()
+                .scaledToFit()
+        }
     }
 }
 
 #Preview {
-    StampOverlay(selectedFrame: "stamp_frame_1")
+    StampOverlay(selectedFrame: "polaroid_frame_1")
 }

@@ -41,9 +41,9 @@ struct DraggablePhoto: View {
                     .shadow(color: .black.opacity(0.25), radius: 4, x: 0, y: 2)
             }
         }
-        .position(currentPosition)
         .rotationEffect(currentRotation)
         .scaleEffect(currentScale * trashScaleEffect)
+        .position(currentPosition)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: trashScaleEffect)
         .onAppear {
             syncFromModel()
@@ -99,16 +99,11 @@ struct DraggablePhoto: View {
                 
                 if let dragValue {
                     let t = dragValue.translation
-                    let angle = lastRotation
-                    
-                    let adjustedX = t.width * cos(angle) + t.height * sin(angle)
-                    let adjustedY = -t.width * sin(angle) + t.height * cos(angle)
-                    
                     let damping = 1 / sqrt(max(photo.scale, 0.5))
-                    
+
                     currentPosition = CGPoint(
-                        x: lastPosition.x + adjustedX * damping,
-                        y: lastPosition.y + adjustedY * damping
+                        x: lastPosition.x + t.width * damping,
+                        y: lastPosition.y + t.height * damping
                     )
                     
                     let touchPoint = dragValue.location
