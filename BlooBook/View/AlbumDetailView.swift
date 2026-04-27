@@ -19,7 +19,6 @@ struct AlbumDetailView: View {
     @State private var isDragging = false
     @State private var isOverTrash = false
     @State private var showBackgroundPicker = false
-    @State private var background: ImageResource = .paper1
     @State private var selectedItem: PhotosPickerItem?
     @State private var currentImage: UIImage?
     @State private var showSavePopup: Bool = false
@@ -46,7 +45,7 @@ struct AlbumDetailView: View {
     
     var body: some View {
         ZStack {
-            Image(background)
+            Image(backgroundImage(from: album.backgroundName))
                 .resizable()
                 .scaledToFill()
                 .frame(width: screenSize.width, height: screenSize.height)
@@ -96,19 +95,19 @@ struct AlbumDetailView: View {
                 
                 Menu {
                     Button {
-                        background = .paper1
+                        album.backgroundName = "paper1"
                     } label: {
                         Text("White")
                     }
                     
                     Button {
-                        background = .paper2
+                        album.backgroundName = "paper2"
                     } label: {
                         Text("Vintage")
                     }
                     
                     Button {
-                        background = .paper3
+                        album.backgroundName = "paper3"
                     } label: {
                         Text("Dark")
                     }
@@ -155,10 +154,10 @@ struct AlbumDetailView: View {
         }
         .toolbar(.hidden, for: .tabBar)
         .toolbarColorScheme(
-            background == .paper3 ? .dark : .light,
+            album.backgroundName == "paper3" ? .dark : .light,
             for: .navigationBar
         )
-        .tint(background == .paper3 ? .white : .black)
+        .tint(album.backgroundName == "paper3" ? .white : .black)
         .navigationTitle(album.name)
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -200,7 +199,7 @@ struct AlbumDetailView: View {
     var albumContentView: some View {
         GeometryReader { proxy in
             ZStack {
-                Image(background)
+                Image(backgroundImage(from: album.backgroundName))
                     .resizable()
                     .scaledToFill()
                     .frame(width: screenSize.width, height: screenSize.height)
@@ -228,6 +227,15 @@ struct AlbumDetailView: View {
         UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
     }
     
+    func backgroundImage(from name: String) -> ImageResource {
+        switch name {
+        case "paper1": return .paper1
+        case "paper2": return .paper2
+        case "paper3": return .paper3
+        default: return .paper1
+        }
+    }
+    
     @ViewBuilder
     var trashLayer: some View {
         VStack {
@@ -238,7 +246,7 @@ struct AlbumDetailView: View {
                     Text("Drag to delete")
                         .font(.caption)
                         .bold()
-                        .foregroundStyle(background == .paper3 ? .white : .black)
+                        .foregroundStyle(album.backgroundName == "paper3" ? .white : .black)
                     Image(systemName: "trash.circle.fill")
                         .font(.system(size: 60))
                         .background(
@@ -299,7 +307,7 @@ struct AlbumDetailView: View {
                 isDragging: $isDragging,
                 isOverTrash: $isOverTrash,
                 trashFrame: $trashFrame,
-                backgroundImage: background
+                backgroundImage: backgroundImage(from: album.backgroundName)
             )
         }
     }
