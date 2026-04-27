@@ -79,7 +79,7 @@ struct AddCollectionSheet: View {
         
     }
     func saveCollection() {
-        let collection = Collection(
+        let collection = AlbumCollection(
             name: name,
             albums: Array(selectedAlbums)
         )

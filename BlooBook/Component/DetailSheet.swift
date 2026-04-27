@@ -23,6 +23,7 @@ struct DetailSheet: View {
     @State private var showDeleteConfirm = false
     @State private var showEditSheet = false
     @State private var selectedStamp: String = ""
+    var onDelete: (() -> Void)? = nil
     
     var body: some View {
         VStack {
@@ -84,11 +85,14 @@ struct DetailSheet: View {
     }
     
     func deleteMemory() {
-        withAnimation {
-            context.delete(memory)
-        }
-        
+        onDelete?()
         dismiss()
+
+        DispatchQueue.main.async {
+            withAnimation {
+                context.delete(memory)
+            }
+        }
     }
 }
 

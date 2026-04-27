@@ -16,6 +16,7 @@ class Album {
     var imageData: Data
     var name: String
     var date: Date
+    var backgroundName: String = "paper1"
     
     @Relationship(inverse: \Photo.albums)
     var photos: [Photo]
@@ -26,13 +27,14 @@ class Album {
     @Relationship(inverse: \CanvasText.albums)
     var texts: [CanvasText]
     
-    var collections: [Collection] = []
+    var collections: [AlbumCollection] = []
     
-    init(colorData: Data, imageData: Data, name: String, date: Date, photos: [Photo], stickers: [Sticker], texts: [CanvasText]) {
+    init(colorData: Data, imageData: Data, name: String, date: Date, backgroundName: String = "paper1", photos: [Photo], stickers: [Sticker], texts: [CanvasText]) {
         self.colorData = colorData
         self.imageData = imageData
         self.name = name
         self.date = date
+        self.backgroundName = backgroundName
         self.photos = photos
         self.stickers = stickers
         self.texts = texts

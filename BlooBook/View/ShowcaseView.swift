@@ -60,7 +60,9 @@ struct ShowcaseView: View {
                 .navigationTitle("All Memories")
                 .navigationBarTitleDisplayMode(.inline)
                 .sheet(item: $selectedMemory) { memory in
-                    DetailSheet(memory: memory)
+                    DetailSheet(memory: memory) {
+                        selectedMemory = nil
+                    }
                         .presentationDetents([.medium])
                         .presentationDragIndicator(.visible)
                 }

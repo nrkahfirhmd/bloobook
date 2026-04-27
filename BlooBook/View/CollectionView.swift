@@ -11,7 +11,7 @@ import SwiftData
 struct CollectionView: View {
     @Environment(\.modelContext) private var context
     
-    @Query var collections: [Collection]
+    @Query var collections: [AlbumCollection]
     @Query var memories: [Memory]
     @Query var albums: [Album]
     @Query var photos: [Photo]
@@ -112,7 +112,6 @@ struct CollectionView: View {
                                     .fill(Color.gray.opacity(0.08))
                             )
                         } else {
-                            
                             ScrollView(.horizontal) {
                                 HStack(spacing: 12) {
                                     ForEach(albums) { album in
@@ -140,6 +139,9 @@ struct CollectionView: View {
                                 }
                                 .padding(.horizontal, 20)
                             }
+                            .scrollTargetBehavior(.viewAligned)
+                            .scrollIndicators(.hidden)
+                            .padding(.horizontal, -20)
                             .confirmationDialog("Delete this album?", isPresented: $showDeleteConfirm, titleVisibility: .visible) {
                                 Button("Delete", role: .destructive) {
                                     if let album = deletedAlbum {
@@ -147,9 +149,6 @@ struct CollectionView: View {
                                     }
                                 }
                             }
-                            .scrollTargetBehavior(.viewAligned)
-                            .scrollIndicators(.hidden)
-                            .padding(.horizontal, -20)
                         }
                     }
                     .padding(.bottom, 12)
@@ -169,21 +168,58 @@ struct CollectionView: View {
                                 }
                                 .foregroundColor(.primary)
                             }
-                            ScrollView(.horizontal) {
-                                HStack(spacing: 12) {
-                                    ForEach(collection.albums) { album in
-                                        AlbumCard(
-                                            album: album
-                                        )
-                                        .frame(width: 140)
-                                        .scrollTargetLayout()
-                                    }
+                            if collection.albums.isEmpty {
+                                VStack(spacing: 10) {
+                                    Image(systemName: "rectangle.stack.badge.plus")
+                                        .font(.system(size: 32))
+                                        .foregroundColor(.gray.opacity(0.6))
+                                    
+                                    Text("Empty collection")
+                                        .font(.subheadline)
+                                        .fontWeight(.semibold)
+                                    
+                                    Text("Open this collection to add albums.")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
                                 }
-                                .padding(.horizontal, 20)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 120)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color.gray.opacity(0.08))
+                                )
+                            } else {
+                                ScrollView(.horizontal) {
+                                    HStack(spacing: 12) {
+                                        ForEach(collection.albums) { album in
+                                            AlbumCard(
+                                                album: album
+                                            )
+                                            .frame(width: 140)
+                                            .scrollTargetLayout()
+                                            .contextMenu {
+                                                Button {
+                                                    selectedAlbum = album
+                                                    showEditSheet = true
+                                                } label: {
+                                                    Label("Edit Album", systemImage: "pencil")
+                                                }
+                                                
+                                                Button(role: .destructive) {
+                                                    deletedAlbum = album
+                                                    showDeleteConfirm = true
+                                                } label: {
+                                                    Label("Delete Album", systemImage: "trash")
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                                .scrollTargetBehavior(.viewAligned)
+                                .scrollIndicators(.hidden)
+                                .padding(.horizontal, -20)
                             }
-                            .scrollTargetBehavior(.viewAligned)
-                            .scrollIndicators(.hidden)
-                            .padding(.horizontal, -20)
                         }
                         .padding(.bottom, 12)
                     }
@@ -226,7 +262,9 @@ struct CollectionView: View {
                         .presentationDragIndicator(.visible)
                 }
                 .sheet(item: $selectedMemory) { memory in
-                    DetailSheet(memory: memory)
+                    DetailSheet(memory: memory) {
+                        selectedMemory = nil
+                    }
                         .presentationDetents([.medium])
                         .presentationDragIndicator(.visible)
                 }
@@ -238,7 +276,7 @@ struct CollectionView: View {
         withAnimation {
             context.delete(album)
         }
-        selectedAlbum = nil
+        deletedAlbum = nil
     }
 }
 
